@@ -12,11 +12,5 @@ def generate_launch_description():
             executable='vision_server',
             name='vision_server',
             output='screen',
-        ),
-		Node(
-            package='vision',
-            executable='vision_publisher',
-            name='vision_publisher',
-            output='screen',
-        ),
+        )
     ])

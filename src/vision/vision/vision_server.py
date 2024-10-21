@@ -208,8 +208,6 @@ class VisionServer(Node):
 		return poseArray
 
 
-
-
 def main():
 	rclpy.init()
 	vision_server = VisionServer()
