@@ -10,9 +10,10 @@ from std_msgs.msg import String
 
 from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import TransformStamped, PointStamped, Pose, Point
+from geometry_msgs.msg import TransformStamped, PointStamped, Pose, Point, PoseArray
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+
 
 from interfaces.srv import VisionCmd
 
@@ -104,8 +105,8 @@ class VisionServer(Node):
 		elif (command == "calibrate"):
 			response.pose_array = self.process_calibrate()
 
-	def process_calibrate():
-		print("to be completed")
+	def process_calibrate(self):
+		self.get_logger().error("to be completed")
 			
 	def setup_blob_detector_birdseye():
 		params = cv2.SimpleBlobDetector_Params()
@@ -134,7 +135,7 @@ class VisionServer(Node):
 	def process_birdseye(self):
 
 		if (self.cv_image is None):
-			print("Empty Image!")
+			self.vision_status_pub.publish("Empty Image!")
 			return
 		
 		# Convert image to HSV color space
@@ -152,6 +153,36 @@ class VisionServer(Node):
 		# Detect blobs in the image
 		keypoints = detector.detect(hsv_image)
 
+		# Initialize PoseArray
+		poseArray = PoseArray()
+
+		# Print Coordinates and prepare to convert them to global
+		self.get_logger().debug(f"Detected {len(keypoints)} blobs")
+
+		for i, k in enumerate(keypoints):
+			self.get_logger().debug(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
+
+			# Convert pixel coordinates to global coordinates
+			global_pose = self.pixel_2_global([k.pt[0], k.pt[1]])
+
+			if global_pose is not None:
+				# Initialize Pose
+				newPose = Pose()
+
+				# Assign global coordinates (adjust with camera offset if necessary)
+				newPose.position.x = global_pose[0] - 0.038  # OFFSET TO ACCOUNT FOR CAMERA OFFSET
+				newPose.position.y = global_pose[1]
+				newPose.position.z = global_pose[2]
+
+				# Add to poseArray
+				poseArray.poses.append(newPose)
+
+				# Print global coordinates
+				self.get_logger().debug( f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, 
+					y = {newPose.position.y}, z = {newPose.position.z}")
+			else:
+				self.get_logger().warning(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
+	
 		# Draw detected blobs
 		for k in keypoints:
 			cv2.circle(overlay, (int(k.pt[0]), int(k.pt[1])), int(k.size/2), (0, 0, 255), -1)
@@ -166,32 +197,15 @@ class VisionServer(Node):
 		hsv_image = cv2.resize(hsv_image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
 
 		# Show the result
+		# cv2.waitKey(1)
 		cv2.imshow("Output", hsv_image)
+		cv2.waitKey(1)
 
-		# # Apply the mask to the original image to isolate the red circle
-		# red_result = cv2.bitwise_and(self.cv_image, self.cv_image, mask=red_mask)
-
-
-		# Code for displaying the mask
-		#
-		# cv2.waitKey(1)
-		# cv2.imshow("bla", red_result)
-		# cv2.waitKey(1)
-
-		item_img_global = None
-
-		# Convert pixel coordinates to global coordinates
-		item_img_global = self.pixel_2_global([cX, cY])
-
-
-		if (item_img_global is None):
+		if len(poseArray.poses) == 0:
+			self.vision_status_pub.publish(String(data="poseArray is empty!"))
 			return
-		
-		x = item_img_global[0] - 0.038 # OFFSET TO ACCOUNT FOR CAMERA OFFSET
-		y = item_img_global[1]
-		z = item_img_global[2] 
-		print(f"x {x} y {y} z {z}")
 
+		return poseArray
 
 
 
