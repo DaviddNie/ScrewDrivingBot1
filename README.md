@@ -2,14 +2,14 @@
 # SCREWDRIVING BOT 1
 
 - [Workspace Structure](#workspace-structure)
-	- [ROS Packages](#ros-packages)
-	- [Others](#others)
-	- [Motion Plan Overview](#motion-plan-overview)
-	- [System Flowchart](#system-flowchart)
+  - [ROS Packages](#ros-packages)
+  - [Others](#others)
+  - [Motion Plan Overview](#motion-plan-overview)
+  - [System Flowchart](#system-flowchart)
 - [Feature Overview](#feature-overview)
-	- [Hole Detection](#hole-detection)
-		- [To test on a video](#to-test-on-a-video)
-		- [To test on an image](#to-test-on-an-image)
+  - [Hole Detection](#hole-detection)
+    - [To test on a video](#to-test-on-a-video)
+    - [To test on an image](#to-test-on-an-image)
 
 ### Recent Updates
 
@@ -28,7 +28,7 @@
   (Centroid locating services and publisher model)  
   - Subtask 1
   - Subtask 2
-- **endEffector**  
+- **end_effector**  
   (End-effector related publisher and control algo)
   - Subtask 1
 - **brain**
