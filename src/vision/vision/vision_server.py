@@ -30,7 +30,7 @@ class VisionServer(Node):
 		self.vision_status_pub = self.create_publisher(String, 'vision_status', 10)
 
 		# Service definitions
-		self.srv = self.create_service(VisionCmd, 'vision_cmd', self.vision_callback)
+		self.srv = self.create_service(VisionCmd, 'vision_srv', self.vision_callback)
 
 		# Transformation Interface
 		self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
