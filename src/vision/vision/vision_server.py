@@ -44,8 +44,6 @@ class VisionServer(Node):
 		self.mask = None
 		self.cv_bridge = CvBridge()
 
-
-
 	def arm_image_depth_info_callback(self, cameraInfo):
 		try:
 			if self.intrinsics:
@@ -98,17 +96,27 @@ class VisionServer(Node):
 		else:
 			return None
 
+	def publishVisionStatus(self, msg):
+		status_msg = String()
+		status_msg.data = msg
+		self.vision_status_pub.publish(status_msg)
+
 	def vision_callback(self, request, response):
 
 		command = request.command
 
 		if (command == self.BIRDS_EYE_CMD):
+			self.publishVisionStatus("Begin processing Birds-eye")
 			response.pose_array = self.process_birdseye()
 		elif (command == self.CALIBRATE_CMD):
+			self.publishVisionStatus("Begin processing Calibration")
 			response.pose_array = self.process_calibrate()
 
 	def process_calibrate(self):
 		self.get_logger().error("to be completed")
+
+		self.publishVisionStatus("Birds-eye processing to be completed")
+
 			
 	def setup_blob_detector_birdseye():
 		params = cv2.SimpleBlobDetector_Params()
@@ -137,8 +145,8 @@ class VisionServer(Node):
 	def process_birdseye(self):
 
 		if (self.cv_image is None):
-			self.vision_status_pub.publish("Empty Image!")
-			return
+			self.publishVisionStatus("Empty Image!")
+			return PoseArray()		
 		
 		# Convert image to HSV color space
 		hsv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV)
@@ -180,8 +188,9 @@ class VisionServer(Node):
 				poseArray.poses.append(newPose)
 
 				# Print global coordinates
-				self.get_logger().debug( f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, 
-					y = {newPose.position.y}, z = {newPose.position.z}")
+				self.get_logger().debug(
+					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
+					f"y = {newPose.position.y}, z = {newPose.position.z}")
 			else:
 				self.get_logger().warning(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
 	
@@ -204,9 +213,10 @@ class VisionServer(Node):
 		cv2.waitKey(1)
 
 		if len(poseArray.poses) == 0:
-			self.vision_status_pub.publish(String(data="poseArray is empty!"))
-			return
+			self.publishVisionStatus("poseArray is empty!  No blobs detected.")
+			return PoseArray()
 
+		self.publishVisionStatus("Birds-eye processing complete")
 		return poseArray
 
 

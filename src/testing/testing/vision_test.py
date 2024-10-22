@@ -35,19 +35,15 @@ class VisionTest(Node):
 			self.get_logger().info(f'ERROR: Could not send Command service request - {e}')
 
 	def vision_status_callback(self, msg):
-		try:
-			# Convert the PoseArray data (list of integers) to a string
-			data_str = ', '.join(map(str, msg.poses))
-			self.get_logger().info(f'Received Perception data: [{data_str}]')
-		except Exception as e:
-			self.get_logger().info(f'ERROR: Cannot read Perception topic data - {e}')
+		self.get_logger().info(f'Vision Status - {msg.data}')
 
 	def command_callback(self, future: Future):
 		try:
-			response = future.result()
-			self.get_logger().info(response.pose_array)
+			# Convert the PoseArray data (list of integers) to a string
+			data_str = ', '.join(map(str, future.poses))
+			self.get_logger().info(f'Received vision data: [{data_str}]')
 		except Exception as e:
-			self.get_logger().info(f'ERROR: Command failed to get response')
+			self.get_logger().info(f'ERROR: Cannot read vision data - {e}')
 
 def main(args=None):
 	rclpy.init(args=args)

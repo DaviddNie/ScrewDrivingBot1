@@ -1,6 +1,11 @@
 from setuptools import find_packages, setup
+import os
 
 package_name = 'vision'
+
+launch_files = [
+    'launch/vision_launch.py',
+]
 
 setup(
     name=package_name,
@@ -10,6 +15,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), launch_files),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,7 +26,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'vision_server = vision_server.vision_server:main'
+            'vision_server = vision.vision_server:main'
         ],
     },
 )
