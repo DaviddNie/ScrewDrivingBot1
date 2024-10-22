@@ -18,6 +18,8 @@ from tf2_ros.transform_listener import TransformListener
 from interfaces.srv import VisionCmd
 
 class VisionServer(Node):
+	BIRDS_EYE_CMD = "birds_eye"
+	CALIBRATE_CMD = "calibrate"
 
 	def __init__(self):
 		super().__init__('vision_server')
@@ -100,9 +102,9 @@ class VisionServer(Node):
 
 		command = request.command
 
-		if (command == "birds_eye"):
+		if (command == self.BIRDS_EYE_CMD):
 			response.pose_array = self.process_birdseye()
-		elif (command == "calibrate"):
+		elif (command == self.CALIBRATE_CMD):
 			response.pose_array = self.process_calibrate()
 
 	def process_calibrate(self):
