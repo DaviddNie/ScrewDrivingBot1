@@ -115,8 +115,8 @@ class VisionServer(Node):
 
 		# Filter by Area
 		params.filterByArea = True
-		params.minArea = 150
-		params.maxArea = 2000
+		params.minArea = 5
+		params.maxArea = 200
 
 		# Filter by Circularity
 		params.filterByCircularity = True
