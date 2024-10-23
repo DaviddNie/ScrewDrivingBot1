@@ -128,7 +128,7 @@ class VisionServer(Node):
 		self.publishVisionStatus("Birds-eye processing to be completed")
 
 			
-	def setup_blob_detector_birdseye():
+	def setup_blob_detector_birdseye(self):
 		params = cv2.SimpleBlobDetector_Params()
 
 		# Filter by Area
@@ -183,8 +183,7 @@ class VisionServer(Node):
 			self.get_logger().debug(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
 
 			# Convert pixel coordinates to global coordinates
-			global_pose = self.pixel_2_global([k.pt[0], k.pt[1]])
-
+			global_pose = self.pixel_2_global([int(k.pt[0]), int(k.pt[1])])
 			if global_pose is not None:
 				# Initialize Pose
 				newPose = Pose()
