@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'vision_test = testing.vision_test:main'
+            'vision_test = testing.vision_test:main',
+            'brain_vision_test = testing.brain_vision_test:main'
         ],
     },
 )

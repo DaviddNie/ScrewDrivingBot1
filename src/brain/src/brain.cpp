@@ -1,5 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/srv/vision_cmd.hpp"
+#include "interfaces/srv/brain_cmd.hpp"
 #include <string>
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int32.hpp"
@@ -19,44 +20,100 @@ public:
         vision_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         movement_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         end_effector_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+        brain_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-		visionStatusSub_ = this->create_subscription<std_msgs::msg::String>(
-			"vision_status", 10,
-			std::bind(&Brain::visionStatusCallback, this, std::placeholders::_1));
+		brainStatusPublisher = this->create_publisher<std_msgs::msg::String>
+			("brain_status", 10);
+
+		brainService = create_service<interfaces::srv::BrainCmd>(
+			"brain_srv",
+			std::bind(&Brain::processBrainService, this, std::placeholders::_1, std::placeholders::_2),
+			rmw_qos_profile_services_default, brain_cb_group_);
 
 	    visionClient_ = create_client<interfaces::srv::VisionCmd>
 			("vision_srv", rmw_qos_profile_services_default, vision_cb_group_);		
+
+		publishBrainStatus("Brain Node initiated");
 	}
 
 private:
-	geometry_msgs::msg::PoseArray callVisionService(const std::string &command) {
+	void processBrainService(const std::shared_ptr<interfaces::srv::BrainCmd::Request> request,
+				 std::shared_ptr<interfaces::srv::BrainCmd::Response> response) {
+		std::string module = request->module;
+		std::string command = request->command;
+
+		if (module == visionModule) {
+			publishBrainStatus("Calling Vision Module");
+			geometry_msgs::msg::PoseArray output = callVisionModule(command);
+
+			response->output = success;
+		} else if (module == movementModule) {
+			publishBrainStatus("Calling Movement Module");
+			callMovementModule(command);
+
+			response->output = success;
+		} else if (module == endEffectorModule) {
+			publishBrainStatus("Calling End Effector Module");
+			callEndEffectorModule(command);
+
+			response->output = success;
+		} else {
+			publishBrainStatus("Error!!! Unknown Module name");
+			
+			response->output = failure;
+		}
+	}
+
+	void publishBrainStatus(std::string msg) {
+		std_msgs::msg::String tmpHolder;
+		tmpHolder.data = msg;
+		brainStatusPublisher->publish(tmpHolder);
+	}
+
+	int callMovementModule(const std::string &command) {
+		std::string bla = command;
+		return 0;
+	}
+
+	int callEndEffectorModule(const std::string &command) {
+		std::string bla = command;
+		return 0;
+	}
+	
+	geometry_msgs::msg::PoseArray callVisionModule(const std::string &command) {
 		auto request = std::make_shared<interfaces::srv::VisionCmd::Request>();
 		request->command = command;
 
+
 		auto future_result = visionClient_->async_send_request(request);
         
-        if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), future_result) ==
-            rclcpp::FutureReturnCode::SUCCESS) {
-
-            return future_result.get()->pose_array;
-        } else {
-            RCLCPP_ERROR(this->get_logger(), "Failed to call vision service");
-            return geometry_msgs::msg::PoseArray();
-        }
-	}
-
-	void visionStatusCallback(const std_msgs::msg::String::SharedPtr msg) {
-		RCLCPP_INFO(this->get_logger(), "Vision Status: %s", msg->data.c_str());
+		geometry_msgs::msg::PoseArray result = future_result.get()->pose_array;
+		
+		publishBrainStatus("Result back to Brain");
+        
+		return result;
 	}
 	
 	// Callback groups
     rclcpp::CallbackGroup::SharedPtr movement_cb_group_;
     rclcpp::CallbackGroup::SharedPtr vision_cb_group_;
     rclcpp::CallbackGroup::SharedPtr end_effector_cb_group_;
+    rclcpp::CallbackGroup::SharedPtr brain_cb_group_;
 
-	rclcpp::Subscription<std_msgs::msg::String>::SharedPtr visionStatusSub_;	
+	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr brainStatusPublisher;
+
+	rclcpp::Service<interfaces::srv::BrainCmd>::SharedPtr brainService;
 
 	rclcpp::Client<interfaces::srv::VisionCmd>::SharedPtr visionClient_;
+
+	// constants
+	std::string const visionModule = "vision";
+	std::string const movementModule = "movement";
+	std::string const endEffectorModule = "endEffector";
+
+	std_msgs::msg::Int32 const success = std_msgs::msg::Int32().set__data(1);
+	std_msgs::msg::Int32 const failure = std_msgs::msg::Int32().set__data(0);
+	// add more output code...
 };
 
 int main(int argc, char **argv)

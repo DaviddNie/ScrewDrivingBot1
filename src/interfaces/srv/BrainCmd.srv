@@ -1,0 +1,4 @@
+string module
+string command
+---
+std_msgs/Int32 output

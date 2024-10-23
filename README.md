@@ -10,8 +10,10 @@
   - [Hole Detection](#hole-detection)
     - [To test on a video](#to-test-on-a-video)
     - [To test on an image](#to-test-on-an-image)
+  - [To run tests](#to-run-tests)
 
 ### Recent Updates
+- [Week 7 Wed][David] Vision and Brain framework completed; testing package added
 
 ### Push to main branch
 - Make sure you squash the commits
@@ -58,3 +60,7 @@ The code is tuned for small circles
 `python3 blob_detection.py`
 #### To test on an image
 `python3 blob_detection_im.py`
+
+### To run tests
+**Step 1**: In one terminal, run `ros2 launch brain system_launch.py`
+**Step 2**: In another terminal, run `ros2 run testing brain_vision_test`, or other testing files

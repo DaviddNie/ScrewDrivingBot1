@@ -44,6 +44,8 @@ class VisionServer(Node):
 		self.mask = None
 		self.cv_bridge = CvBridge()
 
+		self.publishVisionStatus("Vision Server is up!")
+
 	def arm_image_depth_info_callback(self, cameraInfo):
 		try:
 			if self.intrinsics:
@@ -111,6 +113,14 @@ class VisionServer(Node):
 		elif (command == self.CALIBRATE_CMD):
 			self.publishVisionStatus("Begin processing Calibration")
 			response.pose_array = self.process_calibrate()
+		else:
+			self.publishVisionStatus("VisionModule: Unknown Command")
+			response.pose_array = PoseArray()
+
+		self.publishVisionStatus("Vision Processing Complete, returning...")
+
+		return response
+
 
 	def process_calibrate(self):
 		self.get_logger().error("to be completed")
