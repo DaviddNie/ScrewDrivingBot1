@@ -34,6 +34,8 @@ class VisionServer(Node):
 		# Service definitions
 		self.srv = self.create_service(VisionCmd, 'vision_srv', self.vision_callback)
 
+		# self.routine_timer = self.create_timer(0.05, self.routine_callback)
+
 		# Transformation Interface
 		self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 		self.tf_buffer = Buffer()
@@ -43,8 +45,21 @@ class VisionServer(Node):
 		self.cv_image = None
 		self.mask = None
 		self.cv_bridge = CvBridge()
+		cv2.namedWindow("Hole Detection", cv2.WINDOW_NORMAL)
 
 		self.publishVisionStatus("Vision Server is up!")
+
+	def routine_callback(self):
+		if (self.cv_image is None):
+			self.publishVisionStatus("Empty Image!")
+		
+		# Convert image to HSV color space
+		hsv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV)
+
+		cv2.waitKey(1)
+		cv2.imshow("Output", hsv_image)
+		cv2.waitKey(1)
+
 
 	def arm_image_depth_info_callback(self, cameraInfo):
 		try:
@@ -177,10 +192,10 @@ class VisionServer(Node):
 		poseArray = PoseArray()
 
 		# Print Coordinates and prepare to convert them to global
-		self.get_logger().debug(f"Detected {len(keypoints)} blobs")
+		self.publishVisionStatus(f"Detected {len(keypoints)} blobs")
 
 		for i, k in enumerate(keypoints):
-			self.get_logger().debug(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
+			self.publishVisionStatus(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
 
 			# Convert pixel coordinates to global coordinates
 			global_pose = self.pixel_2_global([int(k.pt[0]), int(k.pt[1])])
@@ -197,7 +212,7 @@ class VisionServer(Node):
 				poseArray.poses.append(newPose)
 
 				# Print global coordinates
-				self.get_logger().debug(
+				self.publishVisionStatus(
 					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
 					f"y = {newPose.position.y}, z = {newPose.position.z}")
 			else:
@@ -217,9 +232,9 @@ class VisionServer(Node):
 		hsv_image = cv2.resize(hsv_image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
 
 		# Show the result
-		# cv2.waitKey(1)
-		cv2.imshow("Output", hsv_image)
+		cv2.imshow("Hole Detection", hsv_image)
 		cv2.waitKey(1)
+
 
 		if len(poseArray.poses) == 0:
 			self.publishVisionStatus("poseArray is empty!  No blobs detected.")
