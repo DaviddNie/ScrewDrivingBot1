@@ -28,16 +28,17 @@
   - Subtask 2
 - **vision**  
   (Centroid locating services and publisher model)  
-  - Subtask 1
-  - Subtask 2
+  - Vision Server
 - **end_effector**  
   (End-effector related publisher and control algo)
   - Subtask 1
 - **brain**
+- - brain
 - **interfaces**  
   (Custom messages and services)
   - Src
-	- bla
+	- BrainCmd (for testing individual packages)
+	- VisionCmd
   - Msg
 	- bla
 - **transformations**  
