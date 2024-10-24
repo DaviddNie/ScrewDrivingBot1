@@ -15,8 +15,12 @@
 ### Recent Updates
 - [Week 7 Wed][David] Vision and Brain framework completed; testing package added
 
-### Push to main branch
-- Make sure you squash the commits
+### Push to main branch: CREATE PULL REQUEST!!!
+- rebase first (so that the latest commits are on top) 
+  - `git fetch origin            # Updates origin/master`\
+    `git rebase origin/master    # Rebases current branch onto origin master`
+- Make sure you squash the commits when merging
+- ![squash](img/squash.png)
 - Make sure the codebase is stable
 - Add to "Recent Updates" if it's a feature update 
 
@@ -28,16 +32,17 @@
   - Subtask 2
 - **vision**  
   (Centroid locating services and publisher model)  
-  - Subtask 1
-  - Subtask 2
+  - Vision Server
 - **end_effector**  
   (End-effector related publisher and control algo)
   - Subtask 1
 - **brain**
+- - brain
 - **interfaces**  
   (Custom messages and services)
   - Src
-	- bla
+	- BrainCmd (for testing individual packages)
+	- VisionCmd
   - Msg
 	- bla
 - **transformations**  
