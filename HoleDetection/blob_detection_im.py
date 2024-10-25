@@ -2,15 +2,16 @@ import cv2
 import numpy as np
 
 # Load an image
-image = cv2.imread("SampleImage.png")
+image = cv2.imread("testPhotos/6.png")
 
 # Setup BlobDetector
 params = cv2.SimpleBlobDetector_Params()
 
 # Filter by Area
 params.filterByArea = True
-params.minArea = 150
-params.maxArea = 2000
+# params.minArea = 50
+params.minArea = 5
+params.maxArea = 200
 
 # Filter by Circularity
 params.filterByCircularity = True
@@ -34,6 +35,12 @@ overlay = image.copy()
 
 # Detect blobs in the image
 keypoints = detector.detect(image)
+
+print(f"Number of keypoints detected: {len(keypoints)}")
+
+# Print Coordinates
+for i, k in enumerate(keypoints):
+    print(f"Point {i+1} is at x = {k.pt[0]/2:.2f}; y = {k.pt[1]/2:.2f}")
 
 # Draw detected blobs
 for k in keypoints:
