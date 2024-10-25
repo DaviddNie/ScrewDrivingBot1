@@ -1,6 +1,11 @@
 from setuptools import find_packages, setup
+import os
 
-package_name = 'end-effector'
+package_name = 'end_effector'
+
+launch_files = [
+    'launch/end_effector_launch.py',
+]
 
 setup(
     name=package_name,
@@ -10,6 +15,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), launch_files),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,8 +26,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'arduino_serial = arduino_serial.arduino_serial:main'
-            'end_effector = end_effector.end_effector:main'
+            'arduino_serial = end_effector.arduino_serial:main',
+            'end_effector = end_effector.end_effector:main',
         ],
     },
 )

@@ -5,7 +5,7 @@ import serial
 
 class ArduinoNode(Node):
     def __init__(self):
-        super().__init__('util_arduino_serial')
+        super().__init__('arduino_serial')
         self.subscription = self.create_subscription(String, 'arduinoCommand', self.command_callback, 10)
 
         self.response_publisher = self.create_publisher(String, 'arduinoResponse', 10)
@@ -21,7 +21,7 @@ class ArduinoNode(Node):
 
     def command_callback(self, msg):
         command = msg.data
-        self.get_logger().info(f"Received command: {command}")
+        # self.get_logger().info(f"Received command: {command}")
         self.serial_port.write(command.encode('utf-8'))
         self.serial_port.write(b'\n')
 

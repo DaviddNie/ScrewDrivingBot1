@@ -81,7 +81,7 @@ private:
 
 	int callEndEffectorModule(const std::string &command) {
 		auto request = std::make_shared<interfaces::srv::EndEffectorCmd::Request>();
-		request->command = command;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS")
+		request->command = command;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 
 		// Wait for the service to be available
 		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
@@ -128,6 +128,8 @@ private:
 	rclcpp::Service<interfaces::srv::BrainCmd>::SharedPtr brainService;
 
 	rclcpp::Client<interfaces::srv::VisionCmd>::SharedPtr visionClient_;
+
+	rclcpp::Client<interfaces::srv::EndEffectorCmd>::SharedPtr endEffectorClient_;
 
 	// constants
 	std::string const visionModule = "vision";
