@@ -1,9 +1,0 @@
-# Request
-int32 pwm_value           # PWM control: -255 to 255 (negative: reverse, postive: forward, 0 is stop) (control speed and direction)
-int32 light_intensity     # Desired light intensity (0-255 PWM control)
-
----
-# Response
-float32 torque            # Current estimated torque
-bool success              # Success of the operation
-string message            # Feedback message
