@@ -7,7 +7,9 @@ class ArduinoNode(Node):
     def __init__(self):
         super().__init__('util_arduino_serial')
         self.subscription = self.create_subscription(String, 'arduinoCommand', self.command_callback, 10)
-        # Set up the serial port connection to the Arduino
+
+        self.response_publisher = self.create_publisher(String, 'arduinoResponse', 10)
+
         try:
             self.serial_port = serial.Serial('/dev/ttyACM0', 9600)  # Adjust the port and baud rate as necessary
             self.get_logger().info("Serial connection established with Arduino.")
@@ -21,11 +23,16 @@ class ArduinoNode(Node):
         command = msg.data
         self.get_logger().info(f"Received command: {command}")
         self.serial_port.write(command.encode('utf-8'))
+        self.serial_port.write(b'\n')
 
     def read_arduino_response(self):
         if self.serial_port.in_waiting > 0:
             response = self.serial_port.readline().decode('utf-8').strip()
             self.get_logger().info(f"Arduino response: {response}")
+
+            response_msg = String()
+            response_msg.data = response
+            self.response_publisher.publish(response_msg)
 
 def main(args=None):
     rclpy.init(args=args)

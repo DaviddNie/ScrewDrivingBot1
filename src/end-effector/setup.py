@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'arduino_serial = arduino_serial.arduino_serial:main'
+            'end_effector = end_effector.end_effector:main'
         ],
     },
 )
