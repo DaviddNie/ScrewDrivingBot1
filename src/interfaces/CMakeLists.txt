@@ -15,6 +15,7 @@ find_package(std_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/VisionCmd.srv"
   "srv/BrainCmd.srv"
+  "srv/EndEffectorCmd.srv"
   DEPENDENCIES geometry_msgs
 )
 ament_package()

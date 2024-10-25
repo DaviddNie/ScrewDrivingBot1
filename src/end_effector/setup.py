@@ -1,6 +1,11 @@
 from setuptools import find_packages, setup
+import os
 
-package_name = 'testing'
+package_name = 'end_effector'
+
+launch_files = [
+    'launch/end_effector_launch.py',
+]
 
 setup(
     name=package_name,
@@ -10,19 +15,19 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), launch_files),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='davidnie',
-    maintainer_email='davidnie0418@gmail.com',
+    maintainer='nick',
+    maintainer_email='nickojbell@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'vision_test = testing.vision_test:main',
-            'brain_vision_test = testing.brain_vision_test:main',
-            'end_effector_test = testing.end_effector_test:main',
+            'arduino_serial = end_effector.arduino_serial:main',
+            'end_effector = end_effector.end_effector:main',
         ],
     },
 )

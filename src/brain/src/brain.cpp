@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/srv/vision_cmd.hpp"
 #include "interfaces/srv/brain_cmd.hpp"
+#include "interfaces/srv/end_effector_cmd.hpp"
 #include <string>
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int32.hpp"
@@ -32,6 +33,9 @@ public:
 
 	    visionClient_ = create_client<interfaces::srv::VisionCmd>
 			("vision_srv", rmw_qos_profile_services_default, vision_cb_group_);		
+
+		endEffectorClient_ = create_client<interfaces::srv::EndEffectorCmd>(
+			"end_effector_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
 
 		publishBrainStatus("Brain Node initiated");
 	}
@@ -76,8 +80,27 @@ private:
 	}
 
 	int callEndEffectorModule(const std::string &command) {
-		std::string bla = command;
-		return 0;
+		auto request = std::make_shared<interfaces::srv::EndEffectorCmd::Request>();
+		request->command = command;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
+
+		// Wait for the service to be available
+		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
+			publishBrainStatus("End Effector service not available.");
+			return 0;
+		}
+
+		// Call the service
+		auto result_future = endEffectorClient_->async_send_request(request);
+		auto status = result_future.wait_for(std::chrono::seconds(2));
+
+		if (status == std::future_status::ready) {
+			auto response = result_future.get();
+			publishBrainStatus("End Effector Response: " + response->message);
+			return response->success;
+		} else {
+			publishBrainStatus("Failed to call End Effector service.");
+			return 0;
+		}
 	}
 	
 	geometry_msgs::msg::PoseArray callVisionModule(const std::string &command) {
@@ -106,6 +129,8 @@ private:
 
 	rclcpp::Client<interfaces::srv::VisionCmd>::SharedPtr visionClient_;
 
+	rclcpp::Client<interfaces::srv::EndEffectorCmd>::SharedPtr endEffectorClient_;
+
 	// constants
 	std::string const visionModule = "vision";
 	std::string const movementModule = "movement";
@@ -113,7 +138,6 @@ private:
 
 	std_msgs::msg::Int32 const success = std_msgs::msg::Int32().set__data(1);
 	std_msgs::msg::Int32 const failure = std_msgs::msg::Int32().set__data(0);
-	// add more output code...
 };
 
 int main(int argc, char **argv)

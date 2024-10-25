@@ -1,0 +1,88 @@
+// Motor Pins
+const int ENA = 10;   // Motor speed control (PWM)
+const int IN1 = 9;    // Motor direction control
+const int IN2 = 8;    // Motor direction control
+const int lightPin = 7;  // Light control (digital on/off)
+
+// Track light state
+bool lightOn = false;  // Variable to track whether the light is on or off
+String commandBuffer = "";  // Buffer to store incoming commands
+
+unsigned long lastCharTime = 0;  // Timestamp to track the last received character
+const unsigned long charTimeout = 50;  // Timeout in ms to consider the command complete
+
+void setup() {
+  Serial.begin(9600);  // Initialize serial communication at 9600 baud
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(lightPin, OUTPUT);
+  digitalWrite(lightPin, LOW);  // Start with the light off
+}
+
+void loop() {
+  // Read incoming characters from the serial port
+  while (Serial.available() > 0) {
+    char incomingChar = Serial.read();  // Read incoming character
+    commandBuffer += incomingChar;  // Append the character to the buffer
+    lastCharTime = millis();  // Update the last character received timestamp
+  }
+
+  // Process the command if we've stopped receiving characters for some time (timeout)
+  if (millis() - lastCharTime > charTimeout && commandBuffer.length() > 0) {
+    processCommand(commandBuffer);  // Process the complete command
+    commandBuffer = "";  // Clear the buffer for the next command
+  }
+}
+
+// Function to process commands
+void processCommand(String command) {
+  // Trim the command to remove extra spaces (just in case)
+  command.trim();
+
+  // Check if the command is to control the motor or the light
+  if (command == "LIGHT ON") {
+    if (!lightOn) {  // Only turn on the light if it is currently off
+      digitalWrite(lightPin, HIGH);  // Turn the light on
+      lightOn = true;  // Update the light state
+      Serial.println("Light turned ON.");
+    }
+  } else if (command == "LIGHT OFF") {
+    if (lightOn) {  // Only turn off the light if it is currently on
+      digitalWrite(lightPin, LOW);  // Turn the light off
+      lightOn = false;  // Update the light state
+      Serial.println("Light turned OFF.");
+    }
+  } 
+  else {
+    // Try to interpret the command as a PWM value
+    int pwmValue = command.toInt();
+    
+    // Check if the command is a valid PWM value
+    if (command == String(pwmValue) && pwmValue != 0) {  // Ensure it's a valid number
+      // Control motor direction and speed based on pwmValue
+      if (pwmValue > 0) {  // Forward direction
+        digitalWrite(IN1, HIGH);
+        digitalWrite(IN2, LOW);
+        analogWrite(ENA, pwmValue);  // Set motor speed for forward direction
+        Serial.print("Motor running forward at PWM value: ");
+        Serial.println(pwmValue); 
+      } else if (pwmValue < 0) {  // Reverse direction
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, HIGH);
+        analogWrite(ENA, -pwmValue);  // Set motor speed for reverse direction (invert the value)
+        Serial.print("Motor running in reverse at PWM value: ");
+        Serial.println(-pwmValue);
+      }
+    } else if (pwmValue == 0) {  // Stop the motor
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, LOW);
+      analogWrite(ENA, 0);  // Stop motor
+      Serial.println("Motor stopped.");
+    } else {
+      // If the command is invalid, print an error message
+      Serial.print("Invalid Command: ");
+      Serial.println(command);
+    }
+  }
+}

@@ -34,7 +34,7 @@
   (Centroid locating services and publisher model)  
   - Vision Server
 - **end_effector**  
-  (End-effector related publisher and control algo)
+  (end_effector related publisher and control algo)
   - Subtask 1
 - **brain**
 - - brain
@@ -48,7 +48,7 @@
 - **transformations**  
   (Static Transformations publishers)
 ### Others
-- End-effector visualisation in Rviz
+- end_effector visualisation in Rviz
 
 ### Motion Plan Overview
 ![overview pic](/img/MotionPlan_overview.png)
