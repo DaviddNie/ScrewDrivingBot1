@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/srv/vision_cmd.hpp"
 #include "interfaces/srv/brain_cmd.hpp"
+#include "interfaces/srv/brain_routine_cmd.hpp"
 #include "interfaces/srv/end_effector_cmd.hpp"
 #include <string>
 #include "std_msgs/msg/string.hpp"
@@ -31,6 +32,11 @@ public:
 			std::bind(&Brain::processBrainService, this, std::placeholders::_1, std::placeholders::_2),
 			rmw_qos_profile_services_default, brain_cb_group_);
 
+		brainRoutineService = create_service<interfaces::srv::BrainRoutineCmd>(
+			"brain_routine_srv",
+			std::bind(&Brain::processBrainRoutineService, this, std::placeholders::_1, std::placeholders::_2),
+			rmw_qos_profile_services_default, brain_cb_group_);
+
 	    visionClient_ = create_client<interfaces::srv::VisionCmd>
 			("vision_srv", rmw_qos_profile_services_default, vision_cb_group_);		
 
@@ -41,6 +47,20 @@ public:
 	}
 
 private:
+	void processBrainRoutineService(const std::shared_ptr<interfaces::srv::BrainCmd::Request> request,
+				 std::shared_ptr<interfaces::srv::BrainCmd::Response> response) {
+		std::string command = request->command;
+
+		if (command == screwdrivingRoutine) {
+			publishBrainStatus("Initiating Screwdriving Routine");
+
+			runScrewdrivingRoutine();
+		}
+	}
+
+	void runScrewdrivingRoutine() {
+	}
+
 	void processBrainService(const std::shared_ptr<interfaces::srv::BrainCmd::Request> request,
 				 std::shared_ptr<interfaces::srv::BrainCmd::Response> response) {
 		std::string module = request->module;
@@ -126,6 +146,7 @@ private:
 	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr brainStatusPublisher;
 
 	rclcpp::Service<interfaces::srv::BrainCmd>::SharedPtr brainService;
+	rclcpp::Service<interfaces::srv::BrainCmd>::SharedPtr brainRoutineService;
 
 	rclcpp::Client<interfaces::srv::VisionCmd>::SharedPtr visionClient_;
 
@@ -135,6 +156,11 @@ private:
 	std::string const visionModule = "vision";
 	std::string const movementModule = "movement";
 	std::string const endEffectorModule = "endEffector";
+	std::string const screwdrivingRoutine = "screwdriving";
+
+	// vision commands
+	std::string const birdsEyeCmd = "birds_eye";
+	std::string const clibrateCmd = "calibrate";
 
 	std_msgs::msg::Int32 const success = std_msgs::msg::Int32().set__data(1);
 	std_msgs::msg::Int32 const failure = std_msgs::msg::Int32().set__data(0);

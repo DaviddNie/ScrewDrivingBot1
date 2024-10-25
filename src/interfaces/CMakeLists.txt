@@ -16,6 +16,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/VisionCmd.srv"
   "srv/BrainCmd.srv"
   "srv/EndEffectorCmd.srv"
+  "srv/BrainRoutineCmd.srv"
   DEPENDENCIES geometry_msgs
 )
 ament_package()
