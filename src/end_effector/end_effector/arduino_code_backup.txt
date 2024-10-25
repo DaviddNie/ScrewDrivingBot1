@@ -53,25 +53,36 @@ void processCommand(String command) {
       lightOn = false;  // Update the light state
       Serial.println("Light turned OFF.");
     }
-  } else {
-    int pwmValue = command.toInt();  // Try to interpret the command as a PWM value
-
-    // Control motor direction and speed based on pwmValue
-    if (pwmValue > 0) {  // Forward direction
-      digitalWrite(IN1, HIGH);
-      digitalWrite(IN2, LOW);
-      analogWrite(ENA, pwmValue);  // Set motor speed for forward direction
-      Serial.println("Motor running forward.");
-    } else if (pwmValue < 0) {  // Reverse direction
-      digitalWrite(IN1, LOW);
-      digitalWrite(IN2, HIGH);
-      analogWrite(ENA, -pwmValue);  // Set motor speed for reverse direction (invert the value)
-      Serial.println("Motor running in reverse.");
-    } else {  // Stop the motor
+  } 
+  else {
+    // Try to interpret the command as a PWM value
+    int pwmValue = command.toInt();
+    
+    // Check if the command is a valid PWM value
+    if (command == String(pwmValue) && pwmValue != 0) {  // Ensure it's a valid number
+      // Control motor direction and speed based on pwmValue
+      if (pwmValue > 0) {  // Forward direction
+        digitalWrite(IN1, HIGH);
+        digitalWrite(IN2, LOW);
+        analogWrite(ENA, pwmValue);  // Set motor speed for forward direction
+        Serial.print("Motor running forward at PWM value: ");
+        Serial.println(pwmValue); 
+      } else if (pwmValue < 0) {  // Reverse direction
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, HIGH);
+        analogWrite(ENA, -pwmValue);  // Set motor speed for reverse direction (invert the value)
+        Serial.print("Motor running in reverse at PWM value: ");
+        Serial.println(-pwmValue);
+      }
+    } else if (pwmValue == 0) {  // Stop the motor
       digitalWrite(IN1, LOW);
       digitalWrite(IN2, LOW);
       analogWrite(ENA, 0);  // Stop motor
       Serial.println("Motor stopped.");
+    } else {
+      // If the command is invalid, print an error message
+      Serial.print("Invalid Command: ");
+      Serial.println(command);
     }
   }
 }
