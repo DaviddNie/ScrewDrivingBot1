@@ -7,9 +7,11 @@
 
   <!-- UR5e robot arm -->
   <!-- URDF won't build if following args aren't defined. -->
-  <xacro:arg name="name" default="ur5"/>
+  <!-- <xacro:arg name="name" default="ur5"/>
   <xacro:arg name="ur_type" default="ur5"/>
-  <xacro:include filename="$(find ur_description)/urdf/ur.urdf.xacro"/>
+  <xacro:include filename="$(find ur_description)/urdf/ur.urdf.xacro"/> -->
+
+
 
   <!-- This is the abstract link which the base of the claw attaches to. -->
   <link name="end_effector_root_link"/>
