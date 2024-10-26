@@ -14,6 +14,7 @@
   - [To run tests without end-effector connected](#to-run-tests-without-end-effector-connected)
 
 ### Recent Updates
+- [Week 7 Sat][David] Add stub for Screwdriving Routine
 - [Week 7 Wed][David] Vision and Brain framework completed; testing package added
 
 ### Push to main branch: CREATE PULL REQUEST!!!
@@ -29,14 +30,14 @@
 ### ROS Packages
 - **movement**  
   (services and publisher model for communicating with the UR5e)  
-  - Subtask 1
-  - Subtask 2
+  - N/A
 - **vision**  
   (Centroid locating services and publisher model)  
   - Vision Server
 - **end_effector**  
   (end_effector related publisher and control algo)
-  - Subtask 1
+  - end_effector (Server offering services such as screwdriving, light on/off, status report)
+  - arduino_serial (For bridging Arduino and ROS2)
 - **brain**
 - - brain
 - **interfaces**  
@@ -44,8 +45,9 @@
   - Src
 	- BrainCmd (for testing individual packages)
 	- VisionCmd
+	- EndEffectorCmd
   - Msg
-	- bla
+	- N/A
 - **transformations**  
   (Static Transformations publishers)
 ### Others
