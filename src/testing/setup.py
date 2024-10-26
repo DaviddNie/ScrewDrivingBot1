@@ -23,6 +23,7 @@ setup(
             'vision_test = testing.vision_test:main',
             'brain_vision_test = testing.brain_vision_test:main',
             'end_effector_test = testing.end_effector_test:main',
+            'brain_routine_test = testing.brain_routine_test:main',
         ],
     },
 )

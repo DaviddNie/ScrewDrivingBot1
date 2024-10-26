@@ -10,9 +10,11 @@
   - [Hole Detection](#hole-detection)
     - [To test on a video](#to-test-on-a-video)
     - [To test on an image](#to-test-on-an-image)
-  - [To run tests](#to-run-tests)
+  - [To run tests with end-effector connected](#to-run-tests-with-end-effector-connected)
+  - [To run tests without end-effector connected](#to-run-tests-without-end-effector-connected)
 
 ### Recent Updates
+- [Week 7 Sat][David] Add stub for Screwdriving Routine
 - [Week 7 Wed][David] Vision and Brain framework completed; testing package added
 
 ### Push to main branch: CREATE PULL REQUEST!!!
@@ -28,14 +30,14 @@
 ### ROS Packages
 - **movement**  
   (services and publisher model for communicating with the UR5e)  
-  - Subtask 1
-  - Subtask 2
+  - N/A
 - **vision**  
   (Centroid locating services and publisher model)  
   - Vision Server
 - **end_effector**  
   (end_effector related publisher and control algo)
-  - Subtask 1
+  - end_effector (Server offering services such as screwdriving, light on/off, status report)
+  - arduino_serial (For bridging Arduino and ROS2)
 - **brain**
 - - brain
 - **interfaces**  
@@ -43,8 +45,9 @@
   - Src
 	- BrainCmd (for testing individual packages)
 	- VisionCmd
+	- EndEffectorCmd
   - Msg
-	- bla
+	- N/A
 - **transformations**  
   (Static Transformations publishers)
 ### Others
@@ -66,6 +69,10 @@ The code is tuned for small circles
 #### To test on an image
 `python3 blob_detection_im.py`
 
-### To run tests
+### To run tests with end-effector connected
 **Step 1**: In one terminal, run `ros2 launch brain system_launch.py`
+**Step 2**: In another terminal, run `ros2 run testing brain_vision_test`, or other testing files
+
+### To run tests without end-effector connected
+**Step 1**: In one terminal, run `ros2 launch brain without_endeffector_launch.py`
 **Step 2**: In another terminal, run `ros2 run testing brain_vision_test`, or other testing files
