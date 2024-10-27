@@ -9,7 +9,7 @@
 <!-- The name of the robot is given here. xmlns:xacro is mandatory for xacro files. -->
 <robot name="end_effector" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:property name="scale_factor" value="0.0015"/>
+  <xacro:property name="scale_factor" value="0.001"/>
   <!--
     This is the start of a macro block called "claw".
   
@@ -64,6 +64,14 @@
           izz="1.0"/>
       </inertial>
     </link>
+
+    <link name="${prefix}_camera_socket"> </link>
+
+    <joint name="${prefix}_camera_joint" type="fixed">
+        <parent link="${prefix}base_link"/>
+        <child link="${prefix}_camera_socket"/>
+        <origin xyz="0 0 0.07989" rpy="0 0 0"/>
+    </joint>
 
   </xacro:macro>
 </robot>

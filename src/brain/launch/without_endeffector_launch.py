@@ -31,6 +31,12 @@ def generate_launch_description():
                 get_package_share_directory('vision'), 'launch'),
                 '/vision_launch.py'])
             )
+    
+    transformations = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([os.path.join(
+                get_package_share_directory('transformations'), 'launch'),
+                '/transformations_launch.py'])
+            )
     return LaunchDescription([
         # Declare launch arguments (optional)
         DeclareLaunchArgument('use_sim_time', default_value='false', 
@@ -39,4 +45,5 @@ def generate_launch_description():
         brain_node,
         robotAndCamera,
         vision,
+        transformations,
     ])
