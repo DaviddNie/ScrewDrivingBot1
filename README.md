@@ -16,8 +16,8 @@
   - [Custom End-effector](#custom-end-effector)
 
 ### Bugs to fix
-- brain_routine_test sometimes send two commands to brain  
-  - need to add `is_busy` support in brain
+- ~~brain_routine_test sometimes send two commands to brain~~  
+  - ~~need to add `is_busy` support in brain~~
 ### Recent Updates
 - [Week 7 Sun][David] add dy_trans between camera_socket and camera, tune end_effector scale
 - [Week 7 Sun][David] end_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation

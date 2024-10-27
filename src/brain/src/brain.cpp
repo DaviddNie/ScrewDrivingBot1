@@ -18,7 +18,7 @@
 class Brain : public rclcpp::Node
 {
 public:
-	Brain() : Node("brain")
+	Brain() : Node("brain"), is_busy(false)
 	{
         // Create Mutually Exclusive Callback Groups
         vision_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -53,15 +53,22 @@ private:
 				 std::shared_ptr<interfaces::srv::BrainRoutineCmd::Response> response) {
 		std::string command = request->command;
 
+		if (is_busy) {
+			response->output = busy;
+			publishBrainStatus("Brain is busy");
+			return;
+		}
+
+		is_busy = true;
 		if (command == screwdrivingRoutine) {
 			publishBrainStatus("Initiating Screwdriving Routine");
-
-			response->output = runScrewdrivingRoutine();		
+			response->output = runScrewdrivingRoutine();	
 		} else {
 			// Unknown command
 			response->output = unknown;
 			publishBrainStatus("Routine Service received unrecognized command: " + command);
 		}
+		is_busy = false;	
 	}
 
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
@@ -216,9 +223,12 @@ private:
 	std::string const turnLightOn = "TURN_LIGHT_ON";
 	std::string const turnLightOff = "TURN_LIGHT_OFF";
 
+	bool is_busy;
+
 	std_msgs::msg::Int32 const success = std_msgs::msg::Int32().set__data(1);
 	std_msgs::msg::Int32 const failure = std_msgs::msg::Int32().set__data(0);
 	std_msgs::msg::Int32 const unknown = std_msgs::msg::Int32().set__data(2);
+	std_msgs::msg::Int32 const busy = std_msgs::msg::Int32().set__data(3);
 };
 
 int main(int argc, char **argv)
