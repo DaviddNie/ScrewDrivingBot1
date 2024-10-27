@@ -1,0 +1,69 @@
+<?xml version="1.0" ?>
+<!-- 
+  urdf.xacro file extension indicates that this urdf file should not be directly used but included in another urdf file.
+
+  The robot links and joints are encapsulated within a xacro:macro element which takes in prefix, parent, and origin arguments.
+
+ -->
+
+<!-- The name of the robot is given here. xmlns:xacro is mandatory for xacro files. -->
+<robot name="end_effector" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="scale_factor" value="0.0015"/>
+  <!--
+    This is the start of a macro block called "claw".
+  
+    The macro block takes in 3 arguments:
+      - prefix is literally a prefix or "namespace within the string". Prevents name clashes.
+      - parent is the name of the parent link of the claw.
+      - *origin is the tag for the origin.
+
+    * denotes that the variable is a tag. Literally <origin xyz=... />
+  -->
+  <xacro:macro name="end_effector" params="prefix parent *origin">
+
+    <!-- This joint fixes the claw to an external parent link (could be the world or another robot). -->
+    <joint name="${prefix}end_effector_flange" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}base_link"/>
+
+      <!-- xacro:insert_block means place the tag here. Specify the positional relationship between parent and child links. -->
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <!-- Define a link for mesh base_link.STL. -->
+    <link name="${prefix}base_link">
+
+      <!-- Defines what the link looks like. -->
+      <visual>
+
+        <!-- Shape of object. -->
+        <geometry>
+          <mesh filename="package://end_effector_description/meshes/end_effector.stl" scale= "${scale_factor} ${scale_factor} ${scale_factor}"/>
+		  <!-- <scale>${scale_factor} ${scale_factor} ${scale_factor}</scale> -->
+		</geometry>
+
+        <!-- Origin of the visual element. xyz is in metres. rpy stands for roll pitch yaw in radians. -->
+        <origin xyz="0 0 0" rpy="${pi} 0 ${pi}"/>
+      </visual>
+
+      <!-- Collision is removed for planning to work -->
+
+      <!--
+        Defines the inertial properties of the link.
+        
+        If this block is not defined, everything defaults to zero. However, Gazebo will not render the link if inertia values are zero.
+      
+       -->
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.268"/>
+        <inertia
+          ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0"/>
+      </inertial>
+    </link>
+
+  </xacro:macro>
+</robot>

@@ -12,8 +12,13 @@
     - [To test on an image](#to-test-on-an-image)
   - [To run tests with end-effector connected](#to-run-tests-with-end-effector-connected)
   - [To run tests without end-effector connected](#to-run-tests-without-end-effector-connected)
+  - [End-effector visualisation](#end-effector-visualisation)
 
+### Bugs to fix
+- brain_routine_test sometimes send two commands to brain  
+  - need to add `is_busy` support in brain
 ### Recent Updates
+- [Week 7 Sun][David] end_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation
 - [Week 7 Sat][David] Add stub for Screwdriving Routine
 - [Week 7 Wed][David] Vision and Brain framework completed; testing package added
 
@@ -38,6 +43,8 @@
   (end_effector related publisher and control algo)
   - end_effector (Server offering services such as screwdriving, light on/off, status report)
   - arduino_serial (For bridging Arduino and ROS2)
+- **end_effector_description**
+  (contains end_effector visualisation, camera launch, and UR5e launch)
 - **brain**
 - - brain
 - **interfaces**  
@@ -76,3 +83,10 @@ The code is tuned for small circles
 ### To run tests without end-effector connected
 **Step 1**: In one terminal, run `ros2 launch brain without_endeffector_launch.py`
 **Step 2**: In another terminal, run `ros2 run testing brain_vision_test`, or other testing files
+
+### End-effector visualisation
+1. `use_fake` indicates whether Real or Fake UR5e is used
+2. There are launch files that launches only the end-effector or the end-effector with UR5e with no driver support
+   1. `ros2 launch end_effector_description end_effector_only.launch.py`
+   2. `ros2 launch end_effector_description end_effector_withModel.launch.py`
+![visualisation](img/visualisation_1.png)

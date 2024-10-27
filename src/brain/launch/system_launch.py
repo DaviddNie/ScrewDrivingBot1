@@ -13,38 +13,39 @@ def generate_launch_description():
 
     os.environ["XDG_SESSION_TYPE"] = "xcb"
     
-    return LaunchDescription([
-        # Declare launch arguments (optional)
-        DeclareLaunchArgument('use_sim_time', default_value='false', 
-                               description='Use simulation time if true'),
-
-        Node(
+    
+    brain_node = Node(
             package='brain',
             executable='brain',  # Replace with the actual executable name
             name='brain',
             output='screen',
             parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
-        ),
-
-        # Include other launch files from different packages
-        IncludeLaunchDescription(
+        )
+    
+    robotAndCamera = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([os.path.join(
+                get_package_share_directory('end_effector_description'), 'launch'),
+                '/display.launch.py'])
+            )
+    vision = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([os.path.join(
                 get_package_share_directory('vision'), 'launch'),
                 '/vision_launch.py'])
-            ),
-
-        IncludeLaunchDescription(
+            )
+    
+    end_effector = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([os.path.join(
                 get_package_share_directory('end_effector'), 'launch'),
                 '/end_effector_launch.py'])
-            ),
+            )
+    
+    return LaunchDescription([
+        # Declare launch arguments (optional)
+        DeclareLaunchArgument('use_sim_time', default_value='false', 
+                               description='Use simulation time if true'),
 
-        # # Launch RViz
-        # Node(
-        #     package='rviz2',
-        #     executable='rviz2',
-        #     name='rviz2',
-        #     output='screen',
-        #     parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
-        # ),
+        brain_node,
+        robotAndCamera,
+        vision,
+        end_effector,
     ])
