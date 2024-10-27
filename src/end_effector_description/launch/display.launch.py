@@ -36,7 +36,11 @@ def generate_launch_description():
         'use_fake_hardware': use_fake_str,
         'launch_rviz': 'false',
         'debug': 'true',
-        'description_file': '/home/davidnie/4231/ScrewDrivingBot1/install/end_effector_description/share/end_effector_description/urdf/end_effector_withDriverSupport.xacro'
+        'description_file': os.path.join(
+            get_package_share_directory('end_effector_description'),
+            'urdf',
+            'end_effector_withDriverSupport.xacro',
+)
     }
 
     moveit_launch_args = {
