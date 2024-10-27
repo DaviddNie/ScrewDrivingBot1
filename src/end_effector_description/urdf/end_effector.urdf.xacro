@@ -47,18 +47,7 @@
         <origin xyz="0 0 0" rpy="${pi} 0 ${pi}"/>
       </visual>
 
-      <!-- Defines the collision boundaries. -->
-      <collision>
 
-        <!-- Shape of object. -->
-        <geometry>
-          <mesh filename="package://end_effector_description/meshes/end_effector.stl" scale= "${scale_factor} ${scale_factor} ${scale_factor}"/>
-          <!-- <scale>${scale_factor} ${scale_factor} ${scale_factor}</scale> -->
-		</geometry>
-
-        <!-- Collision origin is usually the same as the visual origin. -->
-        <origin xyz="0 0 0" rpy="${pi} 0 ${pi}"/>
-      </collision>
 
       <!--
         Defines the inertial properties of the link.

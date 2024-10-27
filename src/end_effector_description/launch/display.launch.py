@@ -13,8 +13,8 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
 
     package_name = 'end_effector_description'
-    xacro_path = 'urdf/end_effector.xacro'
-    rviz_path = 'rviz/default.rviz'
+    xacro_path = 'urdf/end_effector_withDriverSupport.xacro'
+    rviz_path = 'rviz/view_robot.rviz'
     
     use_fake = True
     ip_address = 'yyy.yyy.yyy.yyy'
@@ -35,6 +35,8 @@ def generate_launch_description():
         'robot_ip': ip_address,
         'use_fake_hardware': use_fake_str,
         'launch_rviz': 'false',
+        'debug': 'true',
+        'description_file': '/home/davidnie/4231/ScrewDrivingBot1/install/end_effector_description/share/end_effector_description/urdf/end_effector_withDriverSupport.xacro'
     }
 
     moveit_launch_args = {
@@ -94,11 +96,11 @@ def generate_launch_description():
 			)
     
     launch_description = [
+        robot_state_publisher,
         ur_control_launch,
         moveit_launch,
 
         # The UR5e glitches when enabled
-        robot_state_publisher,
     ]
 
     # The UR5e glitches when enabled
