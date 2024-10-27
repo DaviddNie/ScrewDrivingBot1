@@ -13,11 +13,13 @@
   - [To run tests with end-effector connected](#to-run-tests-with-end-effector-connected)
   - [To run tests without end-effector connected](#to-run-tests-without-end-effector-connected)
   - [End-effector visualisation](#end-effector-visualisation)
+  - [Custom End-effector](#custom-end-effector)
 
 ### Bugs to fix
 - brain_routine_test sometimes send two commands to brain  
   - need to add `is_busy` support in brain
 ### Recent Updates
+- [Week 7 Sun][David] add dy_trans between camera_socket and camera, tune end_effector scale
 - [Week 7 Sun][David] end_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation
 - [Week 7 Sat][David] Add stub for Screwdriving Routine
 - [Week 7 Wed][David] Vision and Brain framework completed; testing package added
@@ -57,6 +59,7 @@
 	- N/A
 - **transformations**  
   (Static Transformations publishers)
+  - camera_dy_trans (dy_broadcaster bewteen camera_socket and camera)
 ### Others
 - end_effector visualisation in Rviz
 
@@ -90,3 +93,11 @@ The code is tuned for small circles
    1. `ros2 launch end_effector_description end_effector_only.launch.py`
    2. `ros2 launch end_effector_description end_effector_withModel.launch.py`
 ![visualisation](img/visualisation_1.png)
+
+### Custom End-effector
+
+<div align="center">
+  <img src="img/end_effector_assembly.png" alt="cad" width="50%">
+</div>
+
+![drawing](img/end_effector_engineering_drawing.png)
