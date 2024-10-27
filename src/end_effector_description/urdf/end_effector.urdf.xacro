@@ -9,7 +9,7 @@
 <!-- The name of the robot is given here. xmlns:xacro is mandatory for xacro files. -->
 <robot name="end_effector" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:property name="scale_factor" value="0.002"/>
+  <xacro:property name="scale_factor" value="0.0015"/>
   <!--
     This is the start of a macro block called "claw".
   

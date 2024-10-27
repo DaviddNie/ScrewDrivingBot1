@@ -71,18 +71,12 @@ def generate_launch_description():
         ]
     )
 
-    robot_state_publisher = TimerAction(
-        period=100.0,  # Adjust this duration as needed
-        actions=[
-            Node(
-                name='robot_state_publisher',
-                package='robot_state_publisher',
-                executable='robot_state_publisher',
-                output='screen',
-                parameters=[{'robot_description': xacro_raw_description}]
-            )
-        ]
-    )
+    robot_state_publisher = Node(
+        name='robot_state_publisher',
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description': xacro_raw_description}])
 
     joint_state_publisher = Node(
             name='joint_state_publisher_gui',
@@ -102,11 +96,14 @@ def generate_launch_description():
     launch_description = [
         ur_control_launch,
         moveit_launch,
+
+        # The UR5e glitches when enabled
         robot_state_publisher,
     ]
 
-    if use_fake:
-        launch_description.append(joint_state_publisher)
+    # The UR5e glitches when enabled
+    # if use_fake:
+    #     launch_description.append(joint_state_publisher)
     
     # launch_description.append(rviz_launch)
 
