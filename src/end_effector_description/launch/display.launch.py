@@ -10,25 +10,25 @@ from launch.substitutions import PathJoinSubstitution, Command, LaunchConfigurat
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 
-def generate_launch_description():
+# Launches everything
+    # Camera, UR5e, End-effector Visualisation, rviz
 
-    package_name = 'end_effector_description'
-    xacro_path = 'urdf/end_effector_withDriverSupport.xacro'
-    rviz_path = 'rviz/view_robot.rviz'
-    
+# Change use_fake for RealUR5e/Fake
+
+def generate_launch_description():
     use_fake = True
     ip_address = 'yyy.yyy.yyy.yyy'
     use_fake_str = 'true'
 
+    realsense_launch_file = os.path.join(
+        get_package_share_directory('realsense2_camera'),
+        'launch',
+        'rs_launch.py'
+    )
+
     if not use_fake:
         ip_address = '192.168.0.100'
         use_fake_str = 'false'
-	
-
-    xacro_file = os.path.join(get_package_share_directory(package_name), xacro_path)
-    xacro_raw_description = xacro.process_file(xacro_file).toxml()
-
-    rviz_file = os.path.join(get_package_share_directory(package_name), rviz_path)
 
     ur_control_launch_args = {
         'ur_type': 'ur5e',
@@ -77,40 +77,22 @@ def generate_launch_description():
         ]
     )
 
-    robot_state_publisher = Node(
-        name='robot_state_publisher',
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        parameters=[{'robot_description': xacro_raw_description}])
-
-    joint_state_publisher = Node(
-            name='joint_state_publisher_gui',
-            package='joint_state_publisher_gui',
-            executable='joint_state_publisher_gui',
-            output='screen',
-            parameters=[{'robot_description': xacro_raw_description}])
-    
-    rviz_launch = Node(
-            name='rviz2',
-            package='rviz2',
-            executable='rviz2',
-            output='screen',
-            arguments=['-d', rviz_file]
-			)
+    camera_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(realsense_launch_file),
+            launch_arguments={
+                'align_depth': 'true',
+                'enable_color': 'true',
+                'enable_depth': 'true',
+                'pointcloud.enable': 'true'
+            }.items()
+        )
     
     launch_description = [
-        robot_state_publisher,
         ur_control_launch,
         moveit_launch,
-
-        # The UR5e glitches when enabled
     ]
 
-    # The UR5e glitches when enabled
-    # if use_fake:
-    #     launch_description.append(joint_state_publisher)
-    
-    # launch_description.append(rviz_launch)
+    if not use_fake:
+        launch_description.append(camera_launch)
 
     return LaunchDescription(launch_description)
