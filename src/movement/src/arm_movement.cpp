@@ -72,7 +72,7 @@ public:
         planning_scene_interface.applyCollisionObject(col_object_table);
 
         moveit_msgs::msg::JointConstraint wrist1;
-        wrist1.joint_name = "wrist1";
+        wrist1.joint_name = "wrist_1_link";
         wrist1.position = -180.0 * (M_PI / 180.0);
         wrist1.tolerance_above = M_PI / 18;
         wrist1.tolerance_below = M_PI / 18;
@@ -86,7 +86,7 @@ public:
         // wrist2.weight = 1.0;
 
         moveit_msgs::msg::JointConstraint wrist3;
-        wrist3.joint_name = "wrist3";
+        wrist3.joint_name = "wrist_3_link";
         wrist3.position = 0.0 * (M_PI / 180.0);
         wrist3.tolerance_above = M_PI / 18;
         wrist3.tolerance_below = M_PI / 18;
