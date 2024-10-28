@@ -7,9 +7,32 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(moveit)
+find_package(moveit_msgs)
+find_package(moveit_ros_planning_interface REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+
+add_executable(arm_movement src/arm_movement.cpp)
+ament_target_dependencies(arm_movement rclcpp std_msgs moveit moveit_msgs moveit_ros_planning_interface)
+
+add_executable(arm_brain src/arm_brain.cpp)
+ament_target_dependencies(arm_brain rclcpp std_msgs interfaces)
+
+install(TARGETS
+arm_movement
+arm_brain
+DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
