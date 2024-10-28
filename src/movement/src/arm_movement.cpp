@@ -61,36 +61,36 @@ public:
         planning_scene_interface.applyCollisionObject(col_object_sideWall);
         planning_scene_interface.applyCollisionObject(col_object_table);
 
-        // moveit_msgs::msg::JointConstraint wrist1;
-        // wrist1.joint_name = "wrist_1_joint";  // Adjust the joint controlling the end-effector orientation
-        // wrist1.position = 0.0;  // Keep the wrist joint in its default position
-        // wrist1.tolerance_above = M_PI/2;
-        // wrist1.tolerance_below = M_PI/2;
-        // wrist1.weight = 1.0;
+        moveit_msgs::msg::JointConstraint wrist1;
+        wrist1.joint_name = "wrist_1_joint";  // Adjust the joint controlling the end-effector orientation
+        wrist1.position = 0.0;  // Keep the wrist joint in its default position
+        wrist1.tolerance_above = M_PI/2;
+        wrist1.tolerance_below = M_PI/2;
+        wrist1.weight = 1.0;
 
-        // moveit_msgs::msg::JointConstraint elbow;
-        // elbow.joint_name = "elbow";
-        // elbow.position = 0.0;  // Keep the wrist fixed in the desired orientation
-        // elbow.tolerance_above = M_PI/2;
-        // elbow.tolerance_below = M_PI/2;
-        // elbow.weight = 1.0;
+        moveit_msgs::msg::JointConstraint elbow;
+        elbow.joint_name = "elbow";
+        elbow.position = 0.0;  // Keep the wrist fixed in the desired orientation
+        elbow.tolerance_above = M_PI/2;
+        elbow.tolerance_below = M_PI/2;
+        elbow.weight = 1.0;
 
-        // joint_constraints_.joint_constraints.push_back(wrist1);
-        // joint_constraints_.joint_constraints.push_back(elbow);
+        joint_constraints_.joint_constraints.push_back(wrist1);
+        joint_constraints_.joint_constraints.push_back(elbow);
 
-        moveit_msgs::msg::OrientationConstraint ocm;
-        ocm.link_name = move_group_interface_->getEndEffectorLink(); // Set for the wrist link
-        ocm.header.frame_id = move_group_interface_->getPoseReferenceFrame();
-        ocm.orientation.x = 0.66;
-        ocm.orientation.y = 0.24;
-        ocm.orientation.z = 0.67;
-        ocm.orientation.w = -0.23;  // Ensure end-effector remains horizontal
-        ocm.absolute_x_axis_tolerance = M_PI/2;
-        ocm.absolute_y_axis_tolerance = M_PI/2;
-        ocm.absolute_z_axis_tolerance = M_PI/2; // Allow full rotation around z-axis
-        ocm.weight = 1.0;
+        // moveit_msgs::msg::OrientationConstraint ocm;
+        // ocm.link_name = move_group_interface_->getEndEffectorLink(); // Set for the wrist link
+        // ocm.header.frame_id = move_group_interface_->getPoseReferenceFrame();
+        // ocm.orientation.x = 0.66;
+        // ocm.orientation.y = 0.24;
+        // ocm.orientation.z = 0.67;
+        // ocm.orientation.w = -0.23;  // Ensure end-effector remains horizontal
+        // ocm.absolute_x_axis_tolerance = M_PI/2;
+        // ocm.absolute_y_axis_tolerance = M_PI/2;
+        // ocm.absolute_z_axis_tolerance = M_PI/2; // Allow full rotation around z-axis
+        // ocm.weight = 1.0;
 
-        //orientation_constraints_.orientation_constraints.push_back(ocm);
+        // orientation_constraints_.orientation_constraints.push_back(ocm);
 
         RCLCPP_INFO(this->get_logger(), "ArmMovement node initialized.");
     }
@@ -99,7 +99,7 @@ private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr movement_sub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_done_pub_;
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
-    moveit_msgs::msg::Constraints orientation_constraints_;
+    moveit_msgs::msg::Constraints joint_constraints_;
 
     // Callback for movement commands
     void movementCallback(const std_msgs::msg::String::SharedPtr msg)
@@ -154,10 +154,10 @@ private:
     {
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
 
-        geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
-        geometry_msgs::msg::Pose vertical_pose = current_pose;
-        vertical_pose.position.z = 0.620;  // Move to a safe z position (e.g., above obstacles)
-        moveToPose(vertical_pose);
+        // geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
+        // geometry_msgs::msg::Pose vertical_pose = current_pose;
+        // vertical_pose.position.z = 0.620;  // Move to a safe z position (e.g., above obstacles)
+        // moveToPose(vertical_pose);
 
         geometry_msgs::msg::Pose home_pose;
         home_pose.position.x = 0.436;
@@ -209,15 +209,15 @@ private:
         moveToPose(target_pose);
 
         // Now go straight down
-        target_pose.position.z = 0.15;  // Move down by 0.25
-        moveToPose(target_pose);
+        // target_pose.position.z = 0.15;  // Move down by 0.25
+        // moveToPose(target_pose);
     }
 
     // Helper function to move to a given pose
     void moveToPose(const geometry_msgs::msg::Pose &pose)
     {
         move_group_interface_->setPoseTarget(pose);
-        move_group_interface_->setPathConstraints(orientation_constraints_);
+        move_group_interface_->setPathConstraints(joint_constraints_);
 
         moveit::planning_interface::MoveGroupInterface::Plan plan;
         bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);

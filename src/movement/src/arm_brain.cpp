@@ -51,7 +51,7 @@ private:
         }
 
         movement_done_ = false;  // Block new commands while movement is ongoing
-        //movement_success=false;
+        movement_success=false;
 
         // Publish movement command based on the request mode
         std_msgs::msg::String move_msg;
@@ -73,8 +73,12 @@ private:
         RCLCPP_INFO(this->get_logger(), "Publishing movement command: %s", move_msg.data.c_str());
         movement_pub_->publish(move_msg);
 
-        // Respond success
+        while (!movement_done_ && rclcpp::ok()) {
+            rclcpp::sleep_for(std::chrono::milliseconds(100));  // Wait 100ms between checks
+        }
         response->success = movement_success;
+        
+        
     }
 
     // Callback to handle when movement is done
