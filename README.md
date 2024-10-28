@@ -14,6 +14,8 @@
   - [To run tests without end-effector connected](#to-run-tests-without-end-effector-connected)
   - [End-effector visualisation](#end-effector-visualisation)
   - [Custom End-effector](#custom-end-effector)
+  - [Housing block](#housing-block)
+  - [Screw block](#screw-block)
 
 ### Bugs to fix
 - ~~brain_routine_test sometimes send two commands to brain~~  
@@ -101,3 +103,23 @@ The code is tuned for small circles
 </div>
 
 ![drawing](img/end_effector_engineering_drawing.png)
+
+### Housing block
+
+<div align="center">
+  <img src="img/housing.png" alt="cad" width="50%">
+</div>
+
+<div align="center">
+  <img src="img/housing2.png" alt="cad" width="50%">
+</div>
+
+### Screw block
+
+<div align="center">
+  <img src="img/screwblock.png" alt="cad" width="50%">
+</div>
+
+<div align="center">
+  <img src="img/screwblock2.png" alt="cad" width="50%">
+</div>

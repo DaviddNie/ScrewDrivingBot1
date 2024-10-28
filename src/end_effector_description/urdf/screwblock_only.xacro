@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<!-- Only displays the end-effector -->
+
+<robot name="screwblock_only" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Including the claw.urdf.xacro file to give scope to xacro:claw. Inclusion is a simple copy-and-paste of code. -->
+  <xacro:include filename="$(find end_effector_description)/urdf/end_effector_screwblock.urdf.xacro" />
+</robot>
