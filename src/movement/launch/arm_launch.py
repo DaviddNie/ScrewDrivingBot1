@@ -114,5 +114,14 @@ def generate_launch_description():
             {"use_sim_time": True},
         ],
     )
+    arm_brain_node = Node(
+        package="movement",
+        executable="arm_brain",
+        name="arm_brain",
+        output="screen",
+        parameters=[
+            {"use_sim_time": True},
+        ],
+    )
 
     return launch.LaunchDescription([arm_node, arm_brain_node])

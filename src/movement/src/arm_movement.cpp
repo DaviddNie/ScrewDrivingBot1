@@ -209,8 +209,8 @@ private:
 
         moveToPose(target_pose);
 
-        // // Now go straight down
-        // target_pose.position.z = 0.15;  // Move down
+        // Now go straight down
+        // target_pose.position.z = 0.15;  // Move down by 0.25
         // moveToPose(target_pose);
     }
 
