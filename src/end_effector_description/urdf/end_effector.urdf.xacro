@@ -10,6 +10,7 @@
 <robot name="end_effector" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:property name="scale_factor" value="0.001"/>
+  <xacro:property name="end_effector_displacement" value="0.04"/>
   <!--
     This is the start of a macro block called "claw".
   
@@ -20,15 +21,14 @@
 
     * denotes that the variable is a tag. Literally <origin xyz=... />
   -->
-  <xacro:macro name="end_effector" params="prefix parent *origin">
+  <xacro:macro name="end_effector" params="prefix parent">
 
     <!-- This joint fixes the claw to an external parent link (could be the world or another robot). -->
     <joint name="${prefix}end_effector_flange" type="fixed">
       <parent link="${parent}"/>
       <child link="${prefix}base_link"/>
 
-      <!-- xacro:insert_block means place the tag here. Specify the positional relationship between parent and child links. -->
-      <xacro:insert_block name="origin"/>
+      <origin xyz="0 0 0.04" rpy="0 0 0"/>
     </joint>
 
     <!-- Define a link for mesh base_link.STL. -->
@@ -38,16 +38,22 @@
       <visual>
 
         <!-- Shape of object. -->
-        <geometry>
+      <geometry>
           <mesh filename="package://end_effector_description/meshes/end_effector.stl" scale= "${scale_factor} ${scale_factor} ${scale_factor}"/>
 		  <!-- <scale>${scale_factor} ${scale_factor} ${scale_factor}</scale> -->
-		</geometry>
+      </geometry>
 
         <!-- Origin of the visual element. xyz is in metres. rpy stands for roll pitch yaw in radians. -->
-        <origin xyz="0 0 0" rpy="${pi} 0 ${pi}"/>
+        <origin xyz="0 0 0" rpy="${pi} 0 ${pi/2}"/>
       </visual>
 
-      <!-- Collision is removed for planning to work -->
+      <!-- Collision properties -->
+      <collision>
+        <geometry>
+          <mesh filename="package://end_effector_description/meshes/end_effector.stl" scale="${scale_factor} ${scale_factor} ${scale_factor}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="${pi} 0 ${pi/2}"/>
+      </collision>
 
       <!--
         Defines the inertial properties of the link.
@@ -65,12 +71,19 @@
       </inertial>
     </link>
 
-    <link name="${prefix}_camera_socket"> </link>
+    <link name="camera_link"> </link>
 
     <joint name="${prefix}_camera_joint" type="fixed">
         <parent link="${prefix}base_link"/>
-        <child link="${prefix}_camera_socket"/>
-        <origin xyz="0 0 0.07989" rpy="0 0 0"/>
+        <child link="camera_link"/>
+        <origin xyz="-0.02 0 0.07989" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix}_tool_point"> </link>
+    <joint name="${prefix}_tool_point_joint" type="fixed">
+        <parent link="${prefix}base_link"/>
+        <child link="${prefix}_tool_point"/>
+        <origin xyz="-0.0975 0 0.02" rpy="0 0 0"/>
     </joint>
 
   </xacro:macro>
