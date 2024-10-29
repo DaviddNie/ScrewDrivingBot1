@@ -76,21 +76,21 @@ public:
 
         moveit_msgs::msg::JointConstraint wrist1;
         wrist1.joint_name = "wrist_1_link";
-        wrist1.position = -180.0 * (M_PI / 180.0);
+        wrist1.position = 0;
         wrist1.tolerance_above = M_PI / 18;
         wrist1.tolerance_below = M_PI / 18;
         wrist1.weight = 1.0;
 
-        // moveit_msgs::msg::JointConstraint wrist2;
-        // wrist2.joint_name = "wrist2";
-        // wrist2.position = 270.0 * (M_PI / 180.0);
-        // wrist2.tolerance_above = M_PI / 18;
-        // wrist2.tolerance_below = M_PI / 18;
-        // wrist2.weight = 1.0;
+        moveit_msgs::msg::JointConstraint wrist2;
+        wrist2.joint_name = "wrist_2_link";
+        wrist2.position = M_PI;
+        wrist2.tolerance_above = M_PI / 18;
+        wrist2.tolerance_below = M_PI / 18;
+        wrist2.weight = 1.0;
 
         moveit_msgs::msg::JointConstraint wrist3;
         wrist3.joint_name = "wrist_3_link";
-        wrist3.position = 0.0 * (M_PI / 180.0);
+        wrist3.position = 0;
         wrist3.tolerance_above = M_PI / 18;
         wrist3.tolerance_below = M_PI / 18;
         wrist3.weight = 1.0;
@@ -104,7 +104,7 @@ public:
         // elbow.weight = 1.0;
 
         joint_constraints_.joint_constraints.push_back(wrist1);
-        // joint_constraints_.joint_constraints.push_back(wrist2);
+        joint_constraints_.joint_constraints.push_back(wrist2);
         joint_constraints_.joint_constraints.push_back(wrist3);
         // joint_constraints_.joint_constraints.push_back(elbow);
 
