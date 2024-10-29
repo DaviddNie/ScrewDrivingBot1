@@ -10,10 +10,10 @@
 // Define orientation as a global variable for the class
 const geometry_msgs::msg::Quaternion DEFAULT_ORIENTATION = []{
     geometry_msgs::msg::Quaternion orientation;
-    orientation.x = 0.2954;
-    orientation.y = 0.66278;
-    orientation.z = 0.63794;
-    orientation.w = 0.25785;
+    orientation.x = 0.643;
+    orientation.y = 0.288;
+    orientation.z = 0.659;
+    orientation.w = -0.263;
     return orientation;
 }();
 
@@ -65,11 +65,14 @@ public:
         auto col_object_backWall = generateCollisionObject(2.4, 0.04, 1.0, 0.85, -0.30, 0.5, frame_id, "backWall");
         auto col_object_sideWall = generateCollisionObject(0.04, 1.2, 1.0, -0.30, 0.25, 0.5, frame_id, "sideWall");
         auto col_object_table = generateCollisionObject(2.4, 2.4, 0.04, 0.85, 0.25, 0.05, frame_id, "table");
+        auto col_object_ceiling = generateCollisionObject(2.4, 2.4, 0.04, 0.85, 0.25, 1.2, frame_id, "ceiling");
+
 
         moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
         planning_scene_interface.applyCollisionObject(col_object_backWall);
         planning_scene_interface.applyCollisionObject(col_object_sideWall);
         planning_scene_interface.applyCollisionObject(col_object_table);
+        planning_scene_interface.applyCollisionObject(col_object_ceiling);
 
         moveit_msgs::msg::JointConstraint wrist1;
         wrist1.joint_name = "wrist_1_link";
@@ -148,9 +151,9 @@ private:
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
 
         geometry_msgs::msg::Pose home_pose;
-        home_pose.position.x = 0.436;
-        home_pose.position.y = 0.404;
-        home_pose.position.z = 0.620;  // Final home z position
+        home_pose.position.x = 0.351;
+        home_pose.position.y = 0.328;
+        home_pose.position.z = 0.730;  // Final home z position
 
         home_pose.orientation = DEFAULT_ORIENTATION;  // Use the global orientation
 
