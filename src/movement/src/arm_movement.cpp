@@ -153,7 +153,7 @@ private:
         geometry_msgs::msg::Pose home_pose;
         home_pose.position.x = 0.351;
         home_pose.position.y = 0.328;
-        home_pose.position.z = 0.730;  // Final home z position
+        home_pose.position.z = 0.50;  // Final home z position
 
         home_pose.orientation = DEFAULT_ORIENTATION;  // Use the global orientation
 
@@ -169,8 +169,9 @@ private:
         target_pose.position.x = x;
         target_pose.position.y = y;
         target_pose.position.z = z;
+        target_pose.orientation = DEFAULT_ORIENTATION;
 
-        \
+        
 
         moveToPose(target_pose);
     }
@@ -184,15 +185,15 @@ private:
         
         geometry_msgs::msg::Pose target_pose;
         target_pose.position.x = current_pose.position.x + 0.620; 
-        target_pose.position.y = 0.0;
+        target_pose.position.y = current_pose.position.y;
         target_pose.position.z = 0.3;  // Safe z height
         target_pose.orientation = DEFAULT_ORIENTATION;
 
         moveToPose(target_pose);
 
-        // Now go straight down
-        target_pose.position.z = 0.15;  // Move down
-        moveToPose(target_pose);
+        // // Now go straight down
+        // target_pose.position.z = 0.15;  // Move down
+        // moveToPose(target_pose);
     }
 
     // Helper function to move to a given pose
