@@ -60,6 +60,7 @@ public:
 
         move_group_interface_->setPlanningTime(10.0);
         move_group_interface_->setNumPlanningAttempts(10);
+        move_group_interface_->setGoalTolerance(0.01);  // 1 cm tolerance
         std::string frame_id = move_group_interface_->getPlanningFrame();
 
         auto col_object_backWall = generateCollisionObject(2.4, 0.04, 1.0, 0.85, -0.30, 0.5, frame_id, "backWall");
@@ -74,39 +75,56 @@ public:
         planning_scene_interface.applyCollisionObject(col_object_table);
         planning_scene_interface.applyCollisionObject(col_object_ceiling);
 
+        moveit_msgs::msg::JointConstraint shoulder_pan;
+        shoulder_pan.joint_name = "shoulder_pan_joint";
+        shoulder_pan.position = -M_PI/  2;
+        shoulder_pan.tolerance_above = M_PI / 2;
+        shoulder_pan.tolerance_below = M_PI / 2;
+        shoulder_pan.weight = 1.0;
+
+        moveit_msgs::msg::JointConstraint shoulder_lift;
+        shoulder_lift.joint_name = "shoulder_lift_joint";
+        shoulder_lift.position = M_PI/2;
+        shoulder_lift.tolerance_above = M_PI / 2;
+        shoulder_lift.tolerance_below = M_PI / 2;
+        shoulder_lift.weight = 1.0;
+
+        moveit_msgs::msg::JointConstraint elbow;
+        elbow.joint_name = "elbow_joint";
+        elbow.position = M_PI/2;
+        elbow.tolerance_above = M_PI / 2;
+        elbow.tolerance_below = M_PI / 2;
+        elbow.weight = 1.0;
+
         moveit_msgs::msg::JointConstraint wrist1;
-        wrist1.joint_name = "wrist_1_link";
-        wrist1.position = 0;
-        wrist1.tolerance_above = M_PI / 18;
-        wrist1.tolerance_below = M_PI / 18;
+        wrist1.joint_name = "wrist_1_joint";
+        wrist1.position = M_PI;
+        wrist1.tolerance_above = M_PI / 2;
+        wrist1.tolerance_below = M_PI / 2;
         wrist1.weight = 1.0;
 
         moveit_msgs::msg::JointConstraint wrist2;
-        wrist2.joint_name = "wrist_2_link";
-        wrist2.position = M_PI;
-        wrist2.tolerance_above = M_PI / 18;
-        wrist2.tolerance_below = M_PI / 18;
+        wrist2.joint_name = "wrist_2_joint";
+        wrist2.position = M_PI/2;
+        wrist2.tolerance_above = M_PI / 2;
+        wrist2.tolerance_below = M_PI / 2;
         wrist2.weight = 1.0;
 
         moveit_msgs::msg::JointConstraint wrist3;
-        wrist3.joint_name = "wrist_3_link";
-        wrist3.position = 0;
-        wrist3.tolerance_above = M_PI / 18;
-        wrist3.tolerance_below = M_PI / 18;
+        wrist3.joint_name = "wrist_3_joint";
+        wrist3.position = M_PI/2;
+        wrist3.tolerance_above = M_PI / 2;
+        wrist3.tolerance_below = M_PI / 2;
         wrist3.weight = 1.0;
 
-
-        // moveit_msgs::msg::JointConstraint elbow;
-        // elbow.joint_name = "elbow";
-        // elbow.position = 0.0;  // Keep the wrist fixed in the desired orientation
-        // elbow.tolerance_above = M_PI / 2;
-        // elbow.tolerance_below = M_PI / 2;
-        // elbow.weight = 1.0;
-
-        joint_constraints_.joint_constraints.push_back(wrist1);
-        joint_constraints_.joint_constraints.push_back(wrist2);
-        joint_constraints_.joint_constraints.push_back(wrist3);
+        // Add all constraints to the joint_constraints_ list
+        // joint_constraints_.joint_constraints.push_back(shoulder_pan);
+        // joint_constraints_.joint_constraints.push_back(shoulder_lift);
         // joint_constraints_.joint_constraints.push_back(elbow);
+        joint_constraints_.joint_constraints.push_back(wrist1);
+        // joint_constraints_.joint_constraints.push_back(wrist2);
+        // joint_constraints_.joint_constraints.push_back(wrist3);
+
 
         RCLCPP_INFO(this->get_logger(), "ArmMovement node initialized.");
     }
@@ -208,6 +226,7 @@ private:
         if (success) {
             RCLCPP_INFO(this->get_logger(), "Executing move.");
             move_group_interface_->execute(plan);
+            move_group_interface_->stop();
             publishArmStatus("done");
         } else {
             RCLCPP_WARN(this->get_logger(), "Movement planning failed.");

@@ -91,7 +91,7 @@ def generate_launch_description():
     # generate_common_hybrid_launch_description() returns a list of nodes to launch
     robot_description = get_robot_description()
     robot_description_semantic = get_robot_description_semantic()
-    demo_node = Node(
+    arm_node = Node(
         package="movement",
         executable="arm_movement",
         name="arm_movement",
@@ -100,6 +100,9 @@ def generate_launch_description():
             robot_description,
             robot_description_semantic,
             {"use_sim_time": True},
+            {"planning_time": 10.0},  
+            {"num_planning_attempts": 10},
+            {"goal_tolerance": 0.01},  
         ],
     )
     arm_brain_node = Node(
@@ -112,4 +115,4 @@ def generate_launch_description():
         ],
     )
 
-    return launch.LaunchDescription([demo_node, arm_brain_node])
+    return launch.LaunchDescription([arm_node, arm_brain_node])
