@@ -13,7 +13,9 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
 
     package_name = 'end_effector_description'
-    xacro_path = 'urdf/end_effector_only.xacro'
+    # xacro_path = 'urdf/end_effector_only.xacro'
+    # xacro_path = 'urdf/housing_only.xacro'
+    xacro_path = 'urdf/screwblock_only.xacro'
     rviz_path = 'rviz/end_effector_only.rviz'
 	
     xacro_file = os.path.join(get_package_share_directory(package_name), xacro_path)

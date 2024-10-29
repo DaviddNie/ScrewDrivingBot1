@@ -10,8 +10,6 @@
 
   <!-- Instantiate the claw by using its macro. -->
   <xacro:end_effector prefix="4231" parent="end_effector_root_link" >
-    <!-- Note that we are passing in a tag as an argument. -->
-    <origin xyz="0 0 0" rpy="0 0 0"/>
   </xacro:end_effector>
 
 </robot>
