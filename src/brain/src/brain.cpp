@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/srv/vision_cmd.hpp"
 #include "interfaces/srv/brain_cmd.hpp"
+#include "interfaces/srv/arm_cmd.hpp"
 #include "interfaces/srv/brain_routine_cmd.hpp"
 #include "interfaces/srv/end_effector_cmd.hpp"
 #include <string>
@@ -10,6 +11,7 @@
 #include <tf2_ros/buffer.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
+#include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <cmath>
 #include <tf2_ros/transform_listener.h>
@@ -40,10 +42,13 @@ public:
 			rmw_qos_profile_services_default, brain_cb_group_);
 
 	    visionClient_ = create_client<interfaces::srv::VisionCmd>
-			("vision_srv", rmw_qos_profile_services_default, vision_cb_group_);		
+			("vision_srv", rmw_qos_profile_services_default, end_effector_cb_group_);		
 
 		endEffectorClient_ = create_client<interfaces::srv::EndEffectorCmd>(
 			"end_effector_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
+
+		armClient_ = create_client<interfaces::srv::ArmCmd>(
+			"arm_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
 
 		publishBrainStatus("Brain Node initiated");
 	}
@@ -73,6 +78,7 @@ private:
 
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
 		// TODO: (Movement) Go to Birds-eye pose
+		callMovementModule(home, geometry_msgs::msg::Point());
 			
 		// Get screw centriods
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
@@ -106,7 +112,10 @@ private:
 			// TODO: (Movement) Go-down (assume known height)
 
 			// Screwdriving
-			// callEndEffectorModule(startScrewDiving);
+			callEndEffectorModule(turnLightOn);
+			callEndEffectorModule(startScrewDiving);
+			callEndEffectorModule(turnLightOff);
+
 
 		}
 
@@ -126,7 +135,7 @@ private:
 			response->output = success;
 		} else if (module == movementModule) {
 			publishBrainStatus("Calling Movement Module");
-			callMovementModule(command);
+			// callMovementModule(command);
 
 			response->output = success;
 		} else if (module == endEffectorModule) {
@@ -147,9 +156,29 @@ private:
 		brainStatusPublisher->publish(tmpHolder);
 	}
 
-	int callMovementModule(const std::string &command) {
-		std::string bla = command;
-		return 0;
+	int callMovementModule(const std::string &mode, const geometry_msgs::msg::Point point) {
+		auto request = std::make_shared<interfaces::srv::ArmCmd::Request>();
+		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
+		request->point = point;
+		
+		// Wait for the service to be available
+		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
+			publishBrainStatus("End Effector service not available.");
+			return 0;
+		}
+
+		// Call the service
+		auto result_future = armClient_->async_send_request(request);
+		auto status = result_future.wait_for(std::chrono::seconds(2));
+
+		if (status == std::future_status::ready) {
+			auto response = result_future.get();
+			publishBrainStatus("Arm Response: " + response->success);
+			return response->success;
+		} else {
+			publishBrainStatus("Failed to call Arm service.");
+			return 0;
+		}
 	}
 
 	int callEndEffectorModule(const std::string &command) {
@@ -205,6 +234,9 @@ private:
 
 	rclcpp::Client<interfaces::srv::EndEffectorCmd>::SharedPtr endEffectorClient_;
 
+	rclcpp::Client<interfaces::srv::ArmCmd>::SharedPtr armClient_;
+
+
 	// Module constants
 	std::string const visionModule = "vision";
 	std::string const movementModule = "movement";
@@ -222,6 +254,11 @@ private:
 	std::string const getStatus = "GET_STATUS";
 	std::string const turnLightOn = "TURN_LIGHT_ON";
 	std::string const turnLightOff = "TURN_LIGHT_OFF";
+
+	// arm modes
+	std::string const home = "home";
+	std::string const hole = "hole";
+	std::string const tool = "tool";
 
 	bool is_busy;
 
