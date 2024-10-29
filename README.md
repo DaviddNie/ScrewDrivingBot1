@@ -21,6 +21,7 @@
 - ~~brain_routine_test sometimes send two commands to brain~~  
   - ~~need to add `is_busy` support in brain~~
 ### Recent Updates
+- [Week 8 Tue][David] enable collosion check, add toolpoint_link and camera_link, deprecated transformation pkg
 - [Week 7 Sun][David] add dy_trans between camera_socket and camera, tune end_effector scale
 - [Week 7 Sun][David] end_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation
 - [Week 7 Sat][David] Add stub for Screwdriving Routine
@@ -59,9 +60,9 @@
 	- EndEffectorCmd
   - Msg
 	- N/A
-- **transformations**  
-  (Static Transformations publishers)
-  - camera_dy_trans (dy_broadcaster bewteen camera_socket and camera)
+- **~~transformations~~**
+  ~~(Static Transformations publishers)~~
+  ~~- camera_dy_trans (dy_broadcaster bewteen camera_socket and camera)~~
 ### Others
 - end_effector visualisation in Rviz
 
