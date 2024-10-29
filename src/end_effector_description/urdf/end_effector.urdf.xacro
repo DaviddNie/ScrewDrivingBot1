@@ -44,7 +44,7 @@
 		</geometry>
 
         <!-- Origin of the visual element. xyz is in metres. rpy stands for roll pitch yaw in radians. -->
-        <origin xyz="0 0 0" rpy="${pi} 0 ${pi}"/>
+        <origin xyz="0 0 0" rpy="${pi} 0 ${pi/2}"/>
       </visual>
 
       <!-- Collision is removed for planning to work -->
