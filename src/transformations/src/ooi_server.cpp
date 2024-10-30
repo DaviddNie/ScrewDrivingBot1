@@ -10,6 +10,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <tf2_ros/buffer.h>
 #include "interfaces/srv/real_coor_cmd.hpp"
+#include "std_msgs/msg/string.hpp"
 
 // set up dynamic transformation between camera_link
 class OOIServer : public rclcpp::Node
@@ -25,6 +26,8 @@ class OOIServer : public rclcpp::Node
 				"ooiService",
 				std::bind(&OOIServer::processOOIService, this, std::placeholders::_1, std::placeholders::_2));
 
+			ooiServerStatusPublisher = this->create_publisher<std_msgs::msg::String>
+				("ooi_server_status", 10);
 		}
 
 	private:
@@ -42,6 +45,8 @@ class OOIServer : public rclcpp::Node
 
 		void processOOIService(const std::shared_ptr<interfaces::srv::RealCoorCmd::Request> request,
 				 std::shared_ptr<interfaces::srv::RealCoorCmd::Response> response) {
+			publishServerStatus("OOI Server: Request received");
+			
 			geometry_msgs::msg::Pose inputPose = request->img_pose;
 
 			double x = inputPose.position.x;
@@ -51,6 +56,8 @@ class OOIServer : public rclcpp::Node
 			processAndSendTransform(x, y, z);
 
 			response->success = true;
+
+			publishServerStatus("OOI Server: Processing complete!");
 		}
 
 		void processAndSendTransform(double x, double y, double z) {
@@ -72,6 +79,15 @@ class OOIServer : public rclcpp::Node
 
 		rclcpp::Service<interfaces::srv::RealCoorCmd>::SharedPtr ooiService;
 		geometry_msgs::msg::TransformStamped transform_stamped;
+
+		rclcpp::Publisher<std_msgs::msg::String>::SharedPtr ooiServerStatusPublisher;
+
+
+		void publishServerStatus(std::string msg) {
+			std_msgs::msg::String tmpHolder;
+			tmpHolder.data = msg;
+			ooiServerStatusPublisher->publish(tmpHolder);
+		}
 };
 
 int main(int argc, char **argv)
