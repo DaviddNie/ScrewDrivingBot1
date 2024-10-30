@@ -24,20 +24,20 @@ struct JointConstraintConfig {
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
     { "shoulder_pan_joint",  0,  M_PI / 3,  M_PI / 3 },
-    { "shoulder_lift_joint",  -M_PI / 2,  M_PI / 3,  M_PI / 3 },
-    // { "elbow_joint",          M_PI / 2,  M_PI / 4,  M_PI / 4 },
-    // { "wrist_1_joint",           M_PI/3,      M_PI/2,      M_PI/2 },
-    // { "wrist_2_joint",              0,  M_PI*4/5,  M_PI*4/5 },
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI *2/3,  M_PI *2/3},
+    // { "elbow_joint",          0,  M_PI,  M_PI },
+    { "wrist_1_joint",           M_PI/2,      M_PI*4/5,      M_PI*4/5},
+    { "wrist_2_joint",              0,  M_PI/2,  M_PI/2 },
     { "wrist_3_joint",        M_PI / 2,  M_PI / 2,  M_PI / 2 }
 };
 
 // Default orientation for the end effector
 const geometry_msgs::msg::Quaternion DEFAULT_ORIENTATION = [] {
     geometry_msgs::msg::Quaternion orientation;
-    orientation.x = 0.643;
-    orientation.y = 0.288;
-    orientation.z = 0.659;
-    orientation.w = -0.263;
+    orientation.x = 0.5;
+    orientation.y = 0.5;
+    orientation.z = 0.5;
+    orientation.w = -0.5;
     return orientation;
 }();
 
@@ -129,7 +129,7 @@ private:
     void setupOrientationConstraint(moveit_msgs::msg::Constraints& orientation_constraints) {
         moveit_msgs::msg::OrientationConstraint constraint;
 
-        constraint.link_name = "tool0";
+        constraint.link_name = "4231_tool_point";
         constraint.header.frame_id = "base_link";
         constraint.orientation.x = 0.0;
         constraint.orientation.y = 1.0;
@@ -148,8 +148,8 @@ private:
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
         publishArmStatus("moving to home");
         geometry_msgs::msg::Pose home_pose;
-        home_pose.position.x = 0.351;
-        home_pose.position.y = 0.328;
+        home_pose.position.x = 0.35;
+        home_pose.position.y = 0.35;
         home_pose.position.z = 0.50;
         home_pose.orientation = DEFAULT_ORIENTATION;
         moveToPose(home_pose);
