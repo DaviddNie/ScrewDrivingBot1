@@ -88,7 +88,7 @@ class VisionServer(Node):
 			self.cv_image = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 			
 		except Exception as e:
-			self.get_logger().error(f"Error in arm_image_callback: {str(e)}")
+			self.publishVisionStatus(f"Error in arm_image_callback: {str(e)}")
 
 		
 	# This gets depth_frame aligned with RGB image
@@ -97,7 +97,7 @@ class VisionServer(Node):
 			self.depth_image = self.cv_bridge.imgmsg_to_cv2(msg, msg.encoding)
 				
 		except Exception as e:
-			self.get_logger().error(f"Error in point_cloud_callback: {str(e)}")
+			self.publishVisionStatus(f"Error in point_cloud_callback: {str(e)}")
 
 
 	# Note that the order of length and width is switched from the original code
@@ -105,7 +105,8 @@ class VisionServer(Node):
 	def pixel_2_global(self, pixel_pt):
 		if self.depth_image is not None and self.intrinsics is not None:
 			height, width = self.depth_image.shape[:2]
-			self.get_logger().info(f"Pixel coordinates {pixel_pt} are in bounds for the depth image of size ({height}, {width})")
+
+			self.publishVisionStatus(f"Pixel coordinates {pixel_pt} are in bounds for the depth image of size ({height}, {width})")
 			
 			
 			[x,y,z] = rs.rs2_deproject_pixel_to_point(self.intrinsics, (pixel_pt[1],pixel_pt[0] ), self.depth_image[pixel_pt[1],pixel_pt[0] ]*0.001)
@@ -138,7 +139,7 @@ class VisionServer(Node):
 
 
 	def process_calibrate(self):
-		self.get_logger().error("to be completed")
+		self.publishVisionStatus("to be completed")
 
 		self.publishVisionStatus("Birds-eye processing to be completed")
 
@@ -216,7 +217,7 @@ class VisionServer(Node):
 					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
 					f"y = {newPose.position.y}, z = {newPose.position.z}")
 			else:
-				self.get_logger().warning(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
+				self.publishVisionStatus(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
 	
 		# Draw detected blobs
 		for k in keypoints:
