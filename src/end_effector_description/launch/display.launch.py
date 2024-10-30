@@ -7,7 +7,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 
 # Toggle between simulated or real UR5e hardware
-use_fake = True
+use_fake = False
 use_fake_str = 'true'
 ur_type = 'ur5e'
 ip_address = 'yyy.yyy.yyy.yyy'
@@ -27,7 +27,7 @@ def get_realsense_launch():
     return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(realsense_launch_path),
         launch_arguments={
-            'align_depth': 'true',
+            'align_depth.enable': 'true',
             'enable_color': 'true',
             'enable_depth': 'true',
             'pointcloud.enable': 'true'

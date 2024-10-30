@@ -121,9 +121,9 @@ private:
 			// TODO: (Movement) Go-down (assume known height)
 
 			// Screwdriving
-			callEndEffectorModule(turnLightOn);
-			callEndEffectorModule(startScrewDiving);
-			callEndEffectorModule(turnLightOff);
+			// callEndEffectorModule(turnLightOn);
+			// callEndEffectorModule(startScrewDiving);
+			// callEndEffectorModule(turnLightOff);
 
 
 		}

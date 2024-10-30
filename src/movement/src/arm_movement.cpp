@@ -24,7 +24,7 @@ struct JointConstraintConfig {
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
     { "shoulder_pan_joint",  0,  M_PI / 3,  M_PI / 3 },
-    { "shoulder_lift_joint",  -M_PI / 2,  M_PI *2/3,  M_PI *2/3},
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI *2,  M_PI *2},
     // { "elbow_joint",          0,  M_PI,  M_PI },
     { "wrist_1_joint",           M_PI/2,      M_PI*4/5,      M_PI*4/5},
     { "wrist_2_joint",              0,  M_PI/2,  M_PI/2 },
@@ -88,7 +88,7 @@ private:
 
         planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 0.04, 1.0, 0.85, -0.30, 0.5, frame_id, "backWall"));
         planning_scene_interface.applyCollisionObject(generateCollisionObject(0.04, 1.2, 1.0, -0.30, 0.25, 0.5, frame_id, "sideWall"));
-        planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 2.4, 0.04, 0.85, 0.25, 0.05, frame_id, "table"));
+        // planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 2.4, 0.04, 0.85, 0.25, 0.05, frame_id, "table"));
         planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 2.4, 0.04, 0.85, 0.25, 1.2, frame_id, "ceiling"));
     }
 

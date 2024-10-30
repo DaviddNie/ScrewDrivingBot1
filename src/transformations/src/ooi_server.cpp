@@ -108,3 +108,7 @@ int main(int argc, char **argv)
 	rclcpp::shutdown();
 	return 0;
 }
+
+// [INFO] [1730330669.029399428] [vision_test]: Vision Status - Point 1 is at pixel x = 147.41, y = 69.91
+// [INFO] [1730330669.030878990] [vision_test]: Vision Status - Point 2 is at pixel x = 173.82, y = 19.11
+// [INFO] [1730330669.032910818] [vision_test]: Vision Status - Point 3 is at pixel x = 115.90, y = 19.72

@@ -107,6 +107,13 @@ class VisionServer(Node):
 	# Note that the order of length and width is switched from the original code
 	# i.e. the original codebase has pixel_pt[0],pixel_pt[1] instead of pixel_pt[1],pixel_pt[0]
 	def pixel_2_global(self, pixel_pt):
+
+		if (self.intrinsics is None):
+			self.publishVisionStatus(f"intrinsics is none")
+
+		if (self.depth_image is None):
+			self.publishVisionStatus(f"depth image is none")
+
 		if self.depth_image is not None and self.intrinsics is not None:
 			height, width = self.depth_image.shape[:2]
 
