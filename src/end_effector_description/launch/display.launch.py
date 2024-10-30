@@ -1,98 +1,91 @@
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.actions import TimerAction
-from launch.actions import IncludeLaunchDescription
-import xacro
-from launch.substitutions import PathJoinSubstitution, Command, LaunchConfiguration
+from launch.actions import TimerAction, IncludeLaunchDescription
+from launch.substitutions import PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 
-# Launches everything
-    # Camera, UR5e, End-effector Visualisation, rviz
+# Toggle between simulated or real UR5e hardware
+use_fake = True
+ip_address = 'yyy.yyy.yyy.yyy' if not use_fake else '192.168.0.100'
+use_fake_str = 'true' if use_fake else 'false'
+ur_type = 'ur5e'
 
-# Change use_fake for RealUR5e/Fake
 
-def generate_launch_description():
-    use_fake = True
-    ip_address = 'yyy.yyy.yyy.yyy'
-    use_fake_str = 'true'
-
-    realsense_launch_file = os.path.join(
-        get_package_share_directory('realsense2_camera'),
-        'launch',
-        'rs_launch.py'
+def get_realsense_launch():
+    """Setup Realsense camera launch if using real hardware."""
+    realsense_launch_path = os.path.join(
+        get_package_share_directory('realsense2_camera'), 'launch', 'rs_launch.py'
     )
 
-    if not use_fake:
-        ip_address = '192.168.0.100'
-        use_fake_str = 'false'
+    return IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(realsense_launch_path),
+        launch_arguments={
+            'align_depth': 'true',
+            'enable_color': 'true',
+            'enable_depth': 'true',
+            'pointcloud.enable': 'true'
+        }.items()
+    )
+
+
+def get_ur_control_launch():
+    """Configure UR control launch for the UR5e arm."""
+    end_effector_path = os.path.join(
+        get_package_share_directory('end_effector_description'), 'urdf', 'end_effector_withDriverSupport.xacro'
+    )
 
     ur_control_launch_args = {
-        'ur_type': 'ur5e',
+        'ur_type': ur_type,
         'robot_ip': ip_address,
         'use_fake_hardware': use_fake_str,
-        'launch_rviz': 'false',
-        'debug': 'true',
-        'description_file': os.path.join(
-            get_package_share_directory('end_effector_description'),
-            'urdf',
-            'end_effector_withDriverSupport.xacro',
-)
+        'launch_rviz': 'false',  # Prevent multiple RViz instances
+        'description_file': end_effector_path,
     }
 
-    moveit_launch_args = {
-        'ur_type': 'ur5e',
-        'launch_rviz': 'true',
-    }
-
+    # Add controller if using simulated hardware
     if use_fake:
         ur_control_launch_args['initial_joint_controller'] = 'joint_trajectory_controller'
-        moveit_launch_args['use_fake_hardware'] = use_fake_str
 
-
-    ur_control_launch = IncludeLaunchDescription(
+    return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            PathJoinSubstitution([
-                FindPackageShare('ur_robot_driver'), 'launch', 'ur_control.launch.py'
-            ])
+            PathJoinSubstitution([FindPackageShare('ur_robot_driver'), 'launch', 'ur_control.launch.py'])
         ),
         launch_arguments=ur_control_launch_args.items(),
     )
 
-    # Define the MoveIt server launch with a delay
-    moveit_launch = TimerAction(
-        period=10.0,  # Delay to allow the UR control to start first
+
+def get_moveit_launch():
+    """Configure MoveIt launch with a delay to ensure UR control is initialized."""
+    moveit_launch_args = {
+        'ur_type': ur_type,
+        'launch_rviz': 'true',  # Only launch RViz here to avoid multiple instances
+        'use_fake_hardware': use_fake_str,
+    }
+
+    return TimerAction(
+        period=10.0,  # Delay to prevent conflicts in RViz
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
-                    PathJoinSubstitution([
-                        FindPackageShare('ur_moveit_config'), 'launch', 'ur_moveit.launch.py'
-                    ])
+                    PathJoinSubstitution([FindPackageShare('ur_moveit_config'), 'launch', 'ur_moveit.launch.py'])
                 ),
                 launch_arguments=moveit_launch_args.items(),
-            ),
+            )
         ]
     )
 
-    camera_launch = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(realsense_launch_file),
-            launch_arguments={
-                'align_depth': 'true',
-                'enable_color': 'true',
-                'enable_depth': 'true',
-                'pointcloud.enable': 'true'
-            }.items()
-        )
-    
+
+def generate_launch_description():
+    """Main function to generate the complete launch description."""
     launch_description = [
-        ur_control_launch,
-        moveit_launch,
+        get_ur_control_launch(),
+        get_moveit_launch(),
     ]
 
+    # Only add camera launch if using real hardware
     if not use_fake:
-        launch_description.append(camera_launch)
+        launch_description.append(get_realsense_launch())
 
     return LaunchDescription(launch_description)
