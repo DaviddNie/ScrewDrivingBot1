@@ -2,6 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include "std_msgs/msg/string.hpp"
 #include <moveit/move_group_interface/move_group_interface.h>
+#include <moveit_msgs/msg/orientation_constraint.hpp>
 #include <moveit_msgs/msg/joint_constraint.hpp>
 #include <moveit_msgs/msg/constraints.hpp>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
@@ -11,8 +12,8 @@
 #include <cmath>
 
 // Constants for Cartesian path toggle and tolerance values
-constexpr double PLANNING_TIME = 10.0;
-constexpr int PLANNING_ATTEMPTS = 10;
+constexpr double PLANNING_TIME = 20.0;
+constexpr int PLANNING_ATTEMPTS = 15;
 constexpr double GOAL_TOLERANCE = 0.01;
 
 // Structure for joint constraint configuration
@@ -22,12 +23,12 @@ struct JointConstraintConfig {
 
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
-    // { "shoulder_pan_joint",  -M_PI / 2,  M_PI / 2,  M_PI / 2 },
-    // { "shoulder_lift_joint",  M_PI / 2,  M_PI / 2,  M_PI / 2 },
+    { "shoulder_pan_joint",  0,  M_PI / 3,  M_PI / 3 },
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI / 3,  M_PI / 3 },
     // { "elbow_joint",          M_PI / 2,  M_PI / 4,  M_PI / 4 },
-    { "wrist_1_joint",             0.0,      M_PI,      M_PI },
-    // { "wrist_2_joint",            M_PI,  M_PI / 3,  M_PI / 3 },
-    // { "wrist_3_joint",        M_PI / 2,  M_PI / 2,  M_PI / 2 }
+    // { "wrist_1_joint",           M_PI/3,      M_PI/2,      M_PI/2 },
+    // { "wrist_2_joint",              0,  M_PI*4/5,  M_PI*4/5 },
+    { "wrist_3_joint",        M_PI / 2,  M_PI / 2,  M_PI / 2 }
 };
 
 // Default orientation for the end effector
@@ -125,6 +126,24 @@ private:
         }
     }
 
+    void setupOrientationConstraint(moveit_msgs::msg::Constraints& orientation_constraints) {
+        moveit_msgs::msg::OrientationConstraint constraint;
+
+        constraint.link_name = "tool0";
+        constraint.header.frame_id = "base_link";
+        constraint.orientation.x = 0.0;
+        constraint.orientation.y = 1.0;
+        constraint.orientation.z = 0.0;
+        constraint.orientation.w = 0.0;  
+        
+        constraint.absolute_x_axis_tolerance = 0.8;
+        constraint.absolute_y_axis_tolerance = 0.8;
+        constraint.absolute_z_axis_tolerance = 0.8;
+        constraint.weight = 1.0;
+
+        orientation_constraints.orientation_constraints.emplace_back(constraint);
+    }
+
     void moveToHome() {
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
         publishArmStatus("moving to home");
@@ -183,7 +202,11 @@ private:
     }
 
     void moveToPose(const geometry_msgs::msg::Pose &pose) {
+        // moveit_msgs::msg::Constraints orientation_constraints_;
+        // setupOrientationConstraint(orientation_constraints_);
+
         move_group_interface_->setPoseTarget(pose);
+        // move_group_interface_->setPathConstraints(orientation_constraints_);
         move_group_interface_->setPathConstraints(joint_constraints_);
         moveit::planning_interface::MoveGroupInterface::Plan plan;
         bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
