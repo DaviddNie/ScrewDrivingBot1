@@ -2,7 +2,12 @@ import cv2
 import numpy as np
 
 # Load an image
-image = cv2.imread("testPhotos/6.png")
+image = cv2.imread("testPhotos/real1.png")
+
+# Get the dimensions of the original image
+original_height, original_width = image.shape[:2]
+
+print(f"Width and Height are: {original_width}, {original_height}")	
 
 # Setup BlobDetector
 params = cv2.SimpleBlobDetector_Params()
@@ -10,8 +15,8 @@ params = cv2.SimpleBlobDetector_Params()
 # Filter by Area
 params.filterByArea = True
 # params.minArea = 50
-params.minArea = 5
-params.maxArea = 200
+params.minArea = 50
+params.maxArea = 400
 
 # Filter by Circularity
 params.filterByCircularity = True

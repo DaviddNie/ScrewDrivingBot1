@@ -46,7 +46,7 @@ class VisionServer(Node):
 		self.mask = None
 		self.cv_bridge = CvBridge()
 		cv2.namedWindow("Hole Detection", cv2.WINDOW_NORMAL)
-
+		cv2.resizeWindow("Hole Detection", 640, 480)
 		self.publishVisionStatus("Vision Server is up!")
 
 	def routine_callback(self):
@@ -148,19 +148,19 @@ class VisionServer(Node):
 
 		# Filter by Area
 		params.filterByArea = True
-		params.minArea = 5
-		params.maxArea = 200
+		params.minArea = 25
+		params.maxArea = 50 
 
 		# Filter by Circularity
 		params.filterByCircularity = True
-		params.minCircularity = 0.2
+		params.minCircularity = 0.8  
 
 		# Filter by Convexity
 		params.filterByConvexity = False
 
 		# Filter by Inertia
 		params.filterByInertia = True
-		params.minInertiaRatio = 0.8
+		params.minInertiaRatio = 0.3 
 
 		# Distance Between Blobs
 		params.minDistBetweenBlobs = 10
@@ -172,9 +172,9 @@ class VisionServer(Node):
 		if (self.cv_image is None):
 			self.publishVisionStatus("Empty Image!")
 			return PoseArray()		
-		
-		# Convert image to HSV color space
-		hsv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2HSV)
+
+		# Use the enlarged image for further processing
+		hsv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2RGB)
 
 		# Setup BlobDetector
 		params = self.setup_blob_detector_birdseye()
