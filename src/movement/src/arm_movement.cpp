@@ -54,6 +54,9 @@ public:
         // Publisher to notify when movement is done
         movement_done_pub_ = this->create_publisher<std_msgs::msg::String>("done_move", 10);
 
+        // publisher for movement status
+        movement_status_pub_ = this->create_publisher<std_msgs::msg::String>("arm_status", 10);
+
         // Initialize MoveIt move group interface
         move_group_interface_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(
             std::shared_ptr<rclcpp::Node>(this), "ur_manipulator");
@@ -121,7 +124,7 @@ public:
         // joint_constraints_.joint_constraints.push_back(shoulder_pan);
         // joint_constraints_.joint_constraints.push_back(shoulder_lift);
         // joint_constraints_.joint_constraints.push_back(elbow);
-        joint_constraints_.joint_constraints.push_back(wrist1);
+        //joint_constraints_.joint_constraints.push_back(wrist1);
         // joint_constraints_.joint_constraints.push_back(wrist2);
         // joint_constraints_.joint_constraints.push_back(wrist3);
 
@@ -132,6 +135,7 @@ public:
 private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr movement_sub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_done_pub_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_status_pub_;
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
     moveit_msgs::msg::Constraints joint_constraints_;
 
@@ -139,6 +143,9 @@ private:
     void movementCallback(const std_msgs::msg::String::SharedPtr msg)
     {
         RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
+        std::stringstream ss;
+        ss << "Received command: " << msg->data;
+        publishArmStatus(ss.str());
 
         if (msg->data == "home") {
             moveToHome();
@@ -167,6 +174,7 @@ private:
     void moveToHome()
     {
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
+        publishArmStatus("moving to home");
 
         geometry_msgs::msg::Pose home_pose;
         home_pose.position.x = 0.351;
@@ -182,7 +190,9 @@ private:
     void moveToHole(double x, double y, double z)
     {
         RCLCPP_INFO(this->get_logger(), "Moving to hole position at x: %f, y: %f, z: %f", x, y, z);
-
+        std::stringstream ss;
+        ss << "Moving to hole position at x: " << x << ", y: " << y << ", z: " << z;
+        publishArmStatus(ss.str());
         geometry_msgs::msg::Pose target_pose;
         target_pose.position.x = x;
         target_pose.position.y = y;
@@ -198,6 +208,7 @@ private:
     void moveToTool()
     {
         RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
+        publishArmStatus("moving to tool");
 
         geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
         
@@ -225,22 +236,33 @@ private:
 
         if (success) {
             RCLCPP_INFO(this->get_logger(), "Executing move.");
+            publishArmStatus("executing now");
             move_group_interface_->execute(plan);
             move_group_interface_->stop();
-            publishArmStatus("done");
+            publishArmStatus("movement done");
+            publishArmDone("done");
         } else {
             RCLCPP_WARN(this->get_logger(), "Movement planning failed.");
-            publishArmStatus("fail");
+            publishArmStatus("planninng failed, movement failed");
+            publishArmDone("fail");
         }
 
         move_group_interface_->clearPathConstraints();
+    }
+
+    void publishArmDone(const std::string &done)
+    {
+        std_msgs::msg::String done_msg;
+        done_msg.data = done;
+        movement_done_pub_->publish(done_msg);
+        RCLCPP_INFO(this->get_logger(), "Published arm done: %s", done.c_str());
     }
 
     void publishArmStatus(const std::string &status)
     {
         std_msgs::msg::String status_msg;
         status_msg.data = status;
-        movement_done_pub_->publish(status_msg);
+        movement_status_pub_->publish(status_msg);
         RCLCPP_INFO(this->get_logger(), "Published arm status: %s", status.c_str());
     }
 };
