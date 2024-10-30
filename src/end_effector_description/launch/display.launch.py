@@ -40,7 +40,7 @@ def get_ur_control_launch():
         'ur_type': ur_type,
         'robot_ip': ip_address,
         'use_fake_hardware': use_fake_str,
-        'launch_rviz': 'false',  # Prevent multiple RViz instances
+        'launch_rviz': 'false',  
         'description_file': end_effector_path,
     }
 
@@ -60,7 +60,7 @@ def get_moveit_launch():
     """Configure MoveIt launch with a delay to ensure UR control is initialized."""
     moveit_launch_args = {
         'ur_type': ur_type,
-        'launch_rviz': 'true',  # Only launch RViz here to avoid multiple instances
+        'launch_rviz': 'true', 
         'use_fake_hardware': use_fake_str,
     }
 
