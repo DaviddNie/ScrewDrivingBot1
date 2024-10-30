@@ -7,6 +7,9 @@
 #include <geometry_msgs/msg/vector3.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <tf2_ros/buffer.h>
+#include "interfaces/srv/real_coor_cmd.hpp"
 
 // set up dynamic transformation between camera_link
 class OOIServer : public rclcpp::Node
@@ -14,42 +17,61 @@ class OOIServer : public rclcpp::Node
 	public:
 		OOIServer() : Node("camera_dy_tf_broadcaster")
 		{
-			timer_ = create_wall_timer(std::chrono::milliseconds(10), std::bind(&OOIServer::publishDynamicTransform, this));
 			tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+			initTrans();
+
+			ooiService = create_service<interfaces::srv::RealCoorCmd>(
+				"ooiService",
+				std::bind(&OOIServer::processOOIService, this, std::placeholders::_1, std::placeholders::_2));
+
 		}
 
 	private:
-		void publishDynamicTransform()
-		{
-			geometry_msgs::msg::TransformStamped transform_msg;
+		void initTrans() {
+			transform_stamped.header.stamp = now();
+			transform_stamped.header.frame_id = "camera_link";
+			transform_stamped.child_frame_id = "OOI";
 
-			std_msgs::msg::Header header;
-			header.frame_id = "4231_camera_socket";
-			header.stamp = now();
-
-			geometry_msgs::msg::Vector3 vec;
-			vec.x = 0;
-			vec.y = 0;
-			vec.z = 0;
-
-			geometry_msgs::msg::Quaternion quat;
-			quat.x = 0;
-			quat.y = 0;
-			quat.z = 0;
-			quat.w = 1;
-
-			geometry_msgs::msg::Transform trans;
-			trans.translation = vec;
-			trans.rotation = quat;
-
-			transform_msg.header = header;
-			transform_msg.child_frame_id = "camera_link";
-			transform_msg.transform = trans;
-			tf_broadcaster_->sendTransform(transform_msg);
+			// Identity quaternion (no rotation)
+			transform_stamped.transform.rotation.x = 0.0;
+			transform_stamped.transform.rotation.y = 0.0;
+			transform_stamped.transform.rotation.z = 0.0;
+			transform_stamped.transform.rotation.w = 1.0;
 		}
 
-		rclcpp::TimerBase::SharedPtr timer_;
+		void processOOIService(const std::shared_ptr<interfaces::srv::RealCoorCmd::Request> request,
+				 std::shared_ptr<interfaces::srv::RealCoorCmd::Response> response) {
+			geometry_msgs::msg::Pose inputPose = request->img_pose;
+
+			double x = inputPose.position.x;
+			double y = inputPose.position.y;
+			double z = inputPose.position.z;
+
+			processAndSendTransform(x, y, z);
+
+			response->success = true;
+		}
+
+		void processAndSendTransform(double x, double y, double z) {
+			// This is messed up, we succeed by trial and error
+			// the weird order of "xyz" come from the orientation of the camera with respect to OOI
+			// THe "-" signs come from the fact that the coordinate frame set by opencv is different from reality (the origin is at opposite corner)
+			// 
+			// good thing is we can just apply this later on
+			//
+			// Assign position to transformation
+			transform_stamped.transform.translation.x = z;
+			transform_stamped.transform.translation.y = -y;
+			transform_stamped.transform.translation.z = -x;
+
+			tf_broadcaster_->sendTransform(transform_stamped);
+		}
+
 		std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
+		rclcpp::Service<interfaces::srv::RealCoorCmd>::SharedPtr ooiService;
+		geometry_msgs::msg::TransformStamped transform_stamped;
 };
 
 int main(int argc, char **argv)
