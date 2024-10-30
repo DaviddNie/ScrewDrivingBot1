@@ -27,6 +27,9 @@ class BrainVisionTest(Node):
 		self.tf_buffer = Buffer()
 		self.tf_listener = TransformListener(self.tf_buffer, self)
 
+		time.sleep(1.5)
+
+
 		self.vision_status_sub = self.create_subscription(String, 'vision_status', self.vision_status_callback, 10)
 		self.brain_status_sub = self.create_subscription(String, 'brain_status', self.brain_status_callback, 10)
 		self.ooi_sub = self.create_subscription(String, 'ooi_server_status', self.ooi_status_callback, 10)
@@ -44,9 +47,9 @@ class BrainVisionTest(Node):
 # [INFO] [1730288014.043445586] [vision_test]: Vision Status - Point 3 is at pixel x = 177.87, y = 96.32
 
 		self.pose = Pose()
-		self.pose.position.x = 183.86
-		self.pose.position.y = 149.86
-		self.pose.position.z = 7.0
+		self.pose.position.x = 183.86*0.001
+		self.pose.position.y = 149.86*0.001
+		self.pose.position.z = 7.0*0.001
 
 		self.send_OOI_request(self.pose)
 			
@@ -98,12 +101,10 @@ class BrainVisionTest(Node):
 			response = future.result()
 			
 			self.get_logger().info(f'Received brain output data: [{response.output.data}]')
-
-
-			time.sleep(0.5)
 			
 			self.log_available_frames()
 
+			time.sleep(0.5)
 
 			# Look up the transform from "world" to "OOI"
 			try:

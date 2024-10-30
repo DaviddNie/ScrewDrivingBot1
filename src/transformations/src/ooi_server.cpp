@@ -21,6 +21,10 @@ class OOIServer : public rclcpp::Node
 
 			initTrans();
 
+			timer_ = this->create_wall_timer(
+					std::chrono::milliseconds(50),
+					std::bind(&OOIServer::broadcastTransform, this));
+
 			ooiService = create_service<interfaces::srv::RealCoorCmd>(
 				"ooi_srv",
 				std::bind(&OOIServer::processOOIService, this, std::placeholders::_1, std::placeholders::_2));
@@ -74,6 +78,19 @@ class OOIServer : public rclcpp::Node
 			static_tf_broadcaster_->sendTransform(transform_stamped);
 		}
 
+		void publishServerStatus(std::string msg) {
+			std_msgs::msg::String tmpHolder;
+			tmpHolder.data = msg;
+			ooiServerStatusPublisher->publish(tmpHolder);
+		}
+
+		void broadcastTransform() {
+			transform_stamped.header.stamp = this->now();
+			static_tf_broadcaster_->sendTransform(transform_stamped);
+
+			// publishServerStatus("updated transform_stamped.child_frame_id is " + transform_stamped.child_frame_id);
+		}
+
 		std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
 
 		rclcpp::Service<interfaces::srv::RealCoorCmd>::SharedPtr ooiService;
@@ -81,12 +98,7 @@ class OOIServer : public rclcpp::Node
 
 		rclcpp::Publisher<std_msgs::msg::String>::SharedPtr ooiServerStatusPublisher;
 
-
-		void publishServerStatus(std::string msg) {
-			std_msgs::msg::String tmpHolder;
-			tmpHolder.data = msg;
-			ooiServerStatusPublisher->publish(tmpHolder);
-		}
+		rclcpp::TimerBase::SharedPtr timer_;
 };
 
 int main(int argc, char **argv)
