@@ -4,6 +4,7 @@
 #include "interfaces/srv/arm_cmd.hpp"
 #include "interfaces/srv/brain_routine_cmd.hpp"
 #include "interfaces/srv/end_effector_cmd.hpp"
+#include "interfaces/srv/real_coor_cmd.hpp"
 #include <string>
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int32.hpp"
@@ -27,6 +28,7 @@ public:
         movement_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         end_effector_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         brain_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+        ooi_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
 		brainStatusPublisher = this->create_publisher<std_msgs::msg::String>
 			("brain_status", 10);
@@ -49,6 +51,9 @@ public:
 
 		armClient_ = create_client<interfaces::srv::ArmCmd>(
 			"arm_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
+
+		ooiServerClient_ = create_client<interfaces::srv::RealCoorCmd>(
+			"ooi_srv", rmw_qos_profile_services_default, ooi_cb_group_);
 
 		publishBrainStatus("Brain Node initiated");
 	}
@@ -131,6 +136,7 @@ private:
 				 std::shared_ptr<interfaces::srv::BrainCmd::Response> response) {
 		std::string module = request->module;
 		std::string command = request->command;
+		geometry_msgs::msg::Pose pose = request->pose;
 
 		if (module == visionModule) {
 			publishBrainStatus("Calling Vision Module");
@@ -147,7 +153,16 @@ private:
 			callEndEffectorModule(command);
 
 			response->output = success;
-		} else {
+		} else if (module == ooiModule) {
+			publishBrainStatus("Calling ooi Module");
+			bool output = callOOIModule(pose);
+
+			if (output) {
+				response->output = success;
+			} else {
+				response->output = failure;
+			}
+		}else {
 			publishBrainStatus("Error!!! Unknown Module name");
 			
 			response->output = failure;
@@ -217,10 +232,20 @@ private:
 		auto future_result = visionClient_->async_send_request(request);
         
 		geometry_msgs::msg::PoseArray result = future_result.get()->pose_array;
-		
-		publishBrainStatus("Result back to Brain");
         
 		return result;
+	}
+
+	
+	bool callOOIModule(const geometry_msgs::msg::Pose input) {
+		auto request = std::make_shared<interfaces::srv::RealCoorCmd::Request>();
+		request->img_pose = input;
+
+		auto future_result = ooiServerClient_->async_send_request(request);
+        
+		bool success = future_result.get()->success;
+        
+		return success;
 	}
 	
 	// Callback groups
@@ -228,6 +253,7 @@ private:
     rclcpp::CallbackGroup::SharedPtr vision_cb_group_;
     rclcpp::CallbackGroup::SharedPtr end_effector_cb_group_;
     rclcpp::CallbackGroup::SharedPtr brain_cb_group_;
+    rclcpp::CallbackGroup::SharedPtr ooi_cb_group_;
 
 	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr brainStatusPublisher;
 
@@ -241,10 +267,13 @@ private:
 	rclcpp::Client<interfaces::srv::ArmCmd>::SharedPtr armClient_;
 
 
+	rclcpp::Client<interfaces::srv::RealCoorCmd>::SharedPtr ooiServerClient_;
+
 	// Module constants
 	std::string const visionModule = "vision";
 	std::string const movementModule = "movement";
 	std::string const endEffectorModule = "endEffector";
+	std::string const ooiModule = "ooi";
 
 	// Routine commands
 	std::string const screwdrivingRoutine = "screwdriving";

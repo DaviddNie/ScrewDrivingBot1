@@ -23,7 +23,7 @@ class OOIServer : public rclcpp::Node
 			initTrans();
 
 			ooiService = create_service<interfaces::srv::RealCoorCmd>(
-				"ooiService",
+				"ooi_srv",
 				std::bind(&OOIServer::processOOIService, this, std::placeholders::_1, std::placeholders::_2));
 
 			ooiServerStatusPublisher = this->create_publisher<std_msgs::msg::String>
