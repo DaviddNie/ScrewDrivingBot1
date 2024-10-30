@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include "tf2/LinearMath/Quaternion.h"
-#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/static_transform_broadcaster.h"
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <cmath>
 #include <std_msgs/msg/header.hpp>
@@ -12,13 +12,12 @@
 #include "interfaces/srv/real_coor_cmd.hpp"
 #include "std_msgs/msg/string.hpp"
 
-// set up dynamic transformation between camera_link
 class OOIServer : public rclcpp::Node
 {
 	public:
 		OOIServer() : Node("camera_dy_tf_broadcaster")
 		{
-			tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+			static_tf_broadcaster_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(*this);
 
 			initTrans();
 
@@ -72,10 +71,10 @@ class OOIServer : public rclcpp::Node
 			transform_stamped.transform.translation.y = -y;
 			transform_stamped.transform.translation.z = -x;
 
-			tf_broadcaster_->sendTransform(transform_stamped);
+			static_tf_broadcaster_->sendTransform(transform_stamped);
 		}
 
-		std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+		std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
 
 		rclcpp::Service<interfaces::srv::RealCoorCmd>::SharedPtr ooiService;
 		geometry_msgs::msg::TransformStamped transform_stamped;

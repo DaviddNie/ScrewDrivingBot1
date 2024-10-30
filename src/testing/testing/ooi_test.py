@@ -100,7 +100,7 @@ class BrainVisionTest(Node):
 			self.get_logger().info(f'Received brain output data: [{response.output.data}]')
 
 
-			rclpy.sleep(0.5)
+			time.sleep(0.5)
 			
 			self.log_available_frames()
 
