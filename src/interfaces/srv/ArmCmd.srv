@@ -1,0 +1,5 @@
+# ArmCmd.srv
+string mode   # Modes: home, hole, tool
+geometry_msgs/Point point  # Position with x, y, z coordinates
+---
+bool success  # Success status of the movement

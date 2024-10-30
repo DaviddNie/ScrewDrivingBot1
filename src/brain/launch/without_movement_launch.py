@@ -39,17 +39,6 @@ def generate_launch_description():
                 '/end_effector_launch.py'])
             )
     
-    transformations = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('transformations'), 'launch'),
-                '/transformations_launch.py'])
-            )
-    
-    arm = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('movement'), 'launch'),
-                '/arm_launch.py'])
-            )
     return LaunchDescription([
         # Declare launch arguments (optional)
         DeclareLaunchArgument('use_sim_time', default_value='false', 
@@ -57,8 +46,6 @@ def generate_launch_description():
 
         brain_node,
         robotAndCamera,
-        vision,
-        end_effector,
-        arm,
-        # transformations,
+        # vision,
+        # end_effector,
     ])
