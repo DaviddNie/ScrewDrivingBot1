@@ -7,10 +7,16 @@ import os
 def generate_launch_description():
 
     return LaunchDescription([
+        # Node(
+        #     package='transformations',
+        #     executable='camera_dy_trans',
+        #     name='camera_dy_trans',
+        #     output='screen',
+        # )
         Node(
             package='transformations',
-            executable='camera_dy_trans',
-            name='camera_dy_trans',
+            executable='ooi_server',
+            name='ooi_server',
             output='screen',
         )
     ])
