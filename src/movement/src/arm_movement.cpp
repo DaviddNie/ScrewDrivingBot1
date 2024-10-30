@@ -66,7 +66,7 @@ private:
     moveit_msgs::msg::Constraints joint_constraints_;
 
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
-        CLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
+        RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
         std::stringstream ss;
         ss << "Received command: " << msg->data;
         publishArmStatus(ss.str());
