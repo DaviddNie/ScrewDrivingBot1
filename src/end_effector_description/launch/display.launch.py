@@ -8,9 +8,14 @@ from launch_ros.substitutions import FindPackageShare
 
 # Toggle between simulated or real UR5e hardware
 use_fake = True
-ip_address = 'yyy.yyy.yyy.yyy' if not use_fake else '192.168.0.100'
-use_fake_str = 'true' if use_fake else 'false'
+use_fake_str = 'true'
 ur_type = 'ur5e'
+ip_address = 'yyy.yyy.yyy.yyy'
+
+if not use_fake:
+    ip_address = '192.168.0.100'
+    use_fake_str = 'false'
+
 
 
 def get_realsense_launch():
