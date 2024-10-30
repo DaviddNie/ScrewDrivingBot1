@@ -80,10 +80,11 @@ private:
 		// TODO: (Movement) Go to Birds-eye pose
 		callMovementModule(home, geometry_msgs::msg::Point());
 			
-		// Get screw centriods
+		// Get screw centriods in image frame
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
 
 		// Create a queue to store centroids
+		// Note that the pose are global in terms of the image coordinates, not with respect to base_link
 		std::queue<geometry_msgs::msg::Pose> centroidQueue;
 		for (const auto& pose : output.poses) {
 			centroidQueue.push(pose);
@@ -99,11 +100,14 @@ private:
 
 			publishBrainStatus("Processing (" + std::to_string(x) + "," + std::to_string(y) + ")");
 
+			// TODO: (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link)
+			
+
 			// TODO: (Movement) Move to 0.3 in z-axis
 
 			// TODO: (Movement) Move to (x y 0.3)
 
-			// TODO: (Vision) Re-tune
+			// TODO: (Vision) Fine-tune
 
 			// TODO: (Movement) Move to (new_x, new_y, 0.3)
 

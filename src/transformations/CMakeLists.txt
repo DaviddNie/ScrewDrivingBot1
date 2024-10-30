@@ -13,13 +13,19 @@ find_package(tf2_ros REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-add_executable(camera_dy_trans src/camera_dy_trans.cpp)
+# add_executable(camera_dy_trans src/camera_dy_trans.cpp)
+
+# ament_target_dependencies(
+#   camera_dy_trans rclcpp tf2 tf2_ros geometry_msgs interfaces tf2_ros)
+
+add_executable(ooi_server src/ooi_server.cpp)
 
 ament_target_dependencies(
-  camera_dy_trans rclcpp tf2 tf2_ros geometry_msgs interfaces tf2_ros)
+  ooi_server rclcpp tf2 tf2_ros geometry_msgs interfaces tf2_ros)
 
 install(TARGETS
-camera_dy_trans
+# camera_dy_trans
+  ooi_server
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch/

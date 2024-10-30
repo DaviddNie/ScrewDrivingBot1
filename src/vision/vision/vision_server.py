@@ -47,6 +47,10 @@ class VisionServer(Node):
 		self.cv_bridge = CvBridge()
 		cv2.namedWindow("Hole Detection", cv2.WINDOW_NORMAL)
 		cv2.resizeWindow("Hole Detection", 640, 480)
+
+		cv2.namedWindow("Fine Tune", cv2.WINDOW_NORMAL)
+		cv2.resizeWindow("Fine Tune", 640, 480)
+
 		self.publishVisionStatus("Vision Server is up!")
 
 	def routine_callback(self):
@@ -143,7 +147,30 @@ class VisionServer(Node):
 
 		self.publishVisionStatus("Birds-eye processing to be completed")
 
-			
+	def setup_blob_detector_fineTune(self):
+		params = cv2.SimpleBlobDetector_Params()
+
+		# Filter by Area
+		params.filterByArea = True
+		params.minArea = 80
+		params.maxArea = 200 
+
+		# Filter by Circularity
+		params.filterByCircularity = True
+		params.minCircularity = 0.8  
+
+		# Filter by Convexity
+		params.filterByConvexity = False
+
+		# Filter by Inertia
+		params.filterByInertia = True
+		params.minInertiaRatio = 0.3 
+
+		# Distance Between Blobs
+		params.minDistBetweenBlobs = 10
+
+		return params
+	
 	def setup_blob_detector_birdseye(self):
 		params = cv2.SimpleBlobDetector_Params()
 
@@ -244,6 +271,81 @@ class VisionServer(Node):
 		self.publishVisionStatus("Birds-eye processing complete")
 		return poseArray
 
+	def process_fineTune(self):
+
+		if (self.cv_image is None):
+			self.publishVisionStatus("Empty Image!")
+			return PoseArray()		
+
+		# Use the enlarged image for further processing
+		hsv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2RGB)
+
+		# Setup BlobDetector
+		params = self.setup_blob_detector_fineTune()
+
+		# Create a detector with the parameters
+		detector = cv2.SimpleBlobDetector_create(params)
+
+		# Copy the image for overlay
+		overlay = hsv_image.copy()
+
+		# Detect blobs in the image
+		keypoints = detector.detect(hsv_image)
+
+		# Initialize PoseArray
+		poseArray = PoseArray()
+
+		# Print Coordinates and prepare to convert them to global
+		self.publishVisionStatus(f"Detected {len(keypoints)} blobs")
+
+		for i, k in enumerate(keypoints):
+			self.publishVisionStatus(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
+
+			# Convert pixel coordinates to global coordinates
+			global_pose = self.pixel_2_global([int(k.pt[0]), int(k.pt[1])])
+			if global_pose is not None:
+				# Initialize Pose
+				newPose = Pose()
+
+				# Assign global coordinates (adjust with camera offset if necessary)
+				newPose.position.x = global_pose[0] - 0.038  # OFFSET TO ACCOUNT FOR CAMERA OFFSET
+				newPose.position.y = global_pose[1]
+				newPose.position.z = global_pose[2]
+
+				# Add to poseArray
+				poseArray.poses.append(newPose)
+
+				# Print global coordinates
+				self.publishVisionStatus(
+					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
+					f"y = {newPose.position.y}, z = {newPose.position.z}")
+			else:
+				self.publishVisionStatus(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
+	
+		# Draw detected blobs
+		for k in keypoints:
+			cv2.circle(overlay, (int(k.pt[0]), int(k.pt[1])), int(k.size/2), (0, 0, 255), -1)
+			cv2.line(overlay, (int(k.pt[0])-20, int(k.pt[1])), (int(k.pt[0])+20, int(k.pt[1])), (0,0,0), 3)
+			cv2.line(overlay, (int(k.pt[0]), int(k.pt[1])-20), (int(k.pt[0]), int(k.pt[1])+20), (0,0,0), 3)
+
+		# Adjust opacity for the overlay
+		opacity = 0.5
+		cv2.addWeighted(overlay, opacity, hsv_image, 1 - opacity, 0, hsv_image)
+
+		# Resize the hsv_image to fit the window if needed
+		hsv_image = cv2.resize(hsv_image, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
+
+		# Show the result
+		cv2.imshow("Hole Detection", hsv_image)
+		cv2.waitKey(1)
+
+
+		if len(poseArray.poses) == 0:
+			self.publishVisionStatus("poseArray is empty!  No blobs detected.")
+			return PoseArray()
+
+		self.publishVisionStatus("Birds-eye processing complete")
+		return poseArray
 
 def main():
 	rclpy.init()
