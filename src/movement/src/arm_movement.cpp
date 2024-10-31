@@ -24,7 +24,7 @@ struct JointConstraintConfig {
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
     { "shoulder_pan_joint",  0,  M_PI / 3,  M_PI / 3 },
-    { "shoulder_lift_joint",  -M_PI / 2,  M_PI *2/3,  M_PI *2/3},
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2,  M_PI /2},
     // { "elbow_joint",          0,  M_PI,  M_PI },
     { "wrist_1_joint",           M_PI/2,      M_PI*4/5,      M_PI*4/5},
     { "wrist_2_joint",              0,  M_PI/2,  M_PI/2 },
@@ -54,7 +54,6 @@ public:
         move_group_interface_->setGoalTolerance(GOAL_TOLERANCE);
 
         setupCollisionObjects();
-        setupJointConstraints();
 
         RCLCPP_INFO(this->get_logger(), "ArmMovement node initialized.");
     }
@@ -64,7 +63,6 @@ private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_done_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_status_pub_;
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
-    moveit_msgs::msg::Constraints joint_constraints_;
 
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
         RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
@@ -114,7 +112,7 @@ private:
     return collision_object;
 }
 
-    void setupJointConstraints() {
+    void setupJointConstraints(moveit_msgs::msg::Constraints &constraints) {
         for (const auto& config : JOINT_CONSTRAINTS) {
             moveit_msgs::msg::JointConstraint constraint;
             constraint.joint_name = config.joint_name;
@@ -122,27 +120,42 @@ private:
             constraint.tolerance_above = config.tolerance_above;
             constraint.tolerance_below = config.tolerance_below;
             constraint.weight = 1.0;
-            joint_constraints_.joint_constraints.push_back(constraint);
+            constraints.joint_constraints.push_back(constraint);
         }
     }
 
-    void setupOrientationConstraint(moveit_msgs::msg::Constraints& orientation_constraints) {
-        moveit_msgs::msg::OrientationConstraint constraint;
+    void setupLineConstraint(moveit_msgs::msg::Constraints& constraints) {
+        moveit_msgs::msg::PositionConstraint line_constraint;
+        line_constraint.header.frame_id = "base_link";  // Reference frame for the constraint
+        line_constraint.link_name = "4231_tool_link";
 
-        constraint.link_name = "4231_tool_point";
-        constraint.header.frame_id = "base_link";
-        constraint.orientation.x = 0.0;
-        constraint.orientation.y = 1.0;
-        constraint.orientation.z = 0.0;
-        constraint.orientation.w = 0.0;  
-        
-        constraint.absolute_x_axis_tolerance = 0.8;
-        constraint.absolute_y_axis_tolerance = 0.8;
-        constraint.absolute_z_axis_tolerance = 0.8;
-        constraint.weight = 1.0;
+        shape_msgs::msg::SolidPrimitive line;
+        line.type = shape_msgs::msg::SolidPrimitive::BOX;
+        line.dimensions = { 0.0005, 0.0005, 1.0 };  // X,Y,Z
+        line_constraint.constraint_region.primitives.emplace_back(line);
 
-        orientation_constraints.orientation_constraints.emplace_back(constraint);
+        // Define the box position offset to indicate the starting point along the Z-axis
+        geometry_msgs::msg::Pose box_pose;
+        box_pose.position.x = 0.0;  // Centered along X-axis
+        box_pose.position.y = 0.0;  // Centered along Y-axis
+        box_pose.position.z = 0.5;  // Starting Z position (modify as needed)
+
+        line_constraint.constraint_region.primitive_poses.push_back(box_pose);
+        line_constraint.weight = 1.0;
+
+        // Add this line constraint to the position constraints
+        constraints.position_constraints.push_back(line_constraint);
+
+        geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
+        geometry_msgs::msg::Pose line_pose;
+        line_pose.position.x = current_pose.position.x;
+        line_pose.position.y = current_pose.position.y;
+        line_pose.position.z = current_pose.position.z;
+        line_pose.orientation = DEFAULT_ORIENTATION;
+        line_constraint.weight = 1.0;
+        line_constraint.constraint_region.primitive_poses.emplace_back(line_pose);
     }
+
 
     void moveToHome() {
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
@@ -152,7 +165,7 @@ private:
         home_pose.position.y = 0.35;
         home_pose.position.z = 0.50;
         home_pose.orientation = DEFAULT_ORIENTATION;
-        moveToPose(home_pose);
+        moveToPose(home_pose, "joint");
     }
 
     void processHoleCommand(const std::string& data) {
@@ -167,7 +180,7 @@ private:
             target_pose.position.y = y;
             target_pose.position.z = z;
             target_pose.orientation = DEFAULT_ORIENTATION;
-            moveToPose(target_pose);
+            moveToPose(target_pose, "line");
         }
     }
 
@@ -198,19 +211,28 @@ private:
         target_pose.position.y = current_pose.position.y;
         target_pose.position.z = 0.3;
         target_pose.orientation = DEFAULT_ORIENTATION;
-        moveToPose(target_pose);
+        moveToPose(target_pose, "line");
     }
 
-    void moveToPose(const geometry_msgs::msg::Pose &pose) {
-        // moveit_msgs::msg::Constraints orientation_constraints_;
-        // setupOrientationConstraint(orientation_constraints_);
+    void moveToPose(const geometry_msgs::msg::Pose &pose, const std::string &constraintType) {
+        moveit_msgs::msg::Constraints constraints;
+
+        if (constraintType == "joint") {
+            RCLCPP_INFO(this->get_logger(), "Using joint constraints.");
+            setupJointConstraints(constraints);  // Adds joint constraints
+        } else if (constraintType == "line") {
+            RCLCPP_INFO(this->get_logger(), "Using line constraint along Z-axis.");
+            setupLineConstraint(constraints);  // Adds line constraint
+        } else {
+            RCLCPP_WARN(this->get_logger(), "Unknown constraint type. Using default joint constraints.");
+            setupJointConstraints(constraints);  // Default to joint constraints
+        }
 
         move_group_interface_->setPoseTarget(pose);
-        // move_group_interface_->setPathConstraints(orientation_constraints_);
-        move_group_interface_->setPathConstraints(joint_constraints_);
+        move_group_interface_->setPathConstraints(constraints);
+
         moveit::planning_interface::MoveGroupInterface::Plan plan;
         bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
-
         if (success) {
             RCLCPP_INFO(this->get_logger(), "Executing move.");
             publishArmStatus("executing now");
