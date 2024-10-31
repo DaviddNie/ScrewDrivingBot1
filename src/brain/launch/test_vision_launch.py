@@ -16,7 +16,8 @@ def generate_launch_description():
 
 	os.environ["XDG_SESSION_TYPE"] = "xcb"
 	
-	bag_file_path = '/home/davidnie/4231/ScrewDrivingBot1/camera_bag_with_depth'
+	# bag_file_path = '/home/davidnie/4231/ScrewDrivingBot1/camera_bag_with_depth'
+	bag_file_path = '/home/davidnie/4231/ScrewDrivingBot1/camera_bag_fine_tune'
 
 	# Play the bag file using ExecuteProcess
 	play_bag = ExecuteProcess(

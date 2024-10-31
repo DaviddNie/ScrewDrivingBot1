@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Load an image
-image = cv2.imread("testPhotos/real1.png")
+image = cv2.imread("testPhotos/close_up.png")
 
 # Get the dimensions of the original image
 original_height, original_width = image.shape[:2]
