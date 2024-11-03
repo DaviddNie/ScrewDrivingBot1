@@ -115,14 +115,12 @@ class VisionServer(Node):
 			self.publishVisionStatus(f"depth image is none")
 
 		if self.depth_image is not None and self.intrinsics is not None:
-			height, width = self.depth_image.shape[:2]
-
-			self.publishVisionStatus(f"Pixel coordinates {pixel_pt} are in bounds for the depth image of size ({height}, {width})")
-			
-			
 			[x,y,z] = rs.rs2_deproject_pixel_to_point(self.intrinsics, (pixel_pt[1],pixel_pt[0] ), self.depth_image[pixel_pt[1],pixel_pt[0] ]*0.001)
 			return [x, y,z]
 		else:
+			height, width = self.depth_image.shape[:2]
+			self.publishVisionStatus(f"ERROR: Pixel coordinates {pixel_pt} is not in bounds for the depth image of size ({height}, {width})")
+
 			return None
 
 	def publishVisionStatus(self, msg):
@@ -245,11 +243,6 @@ class VisionServer(Node):
 
 				# Add to poseArray
 				poseArray.poses.append(newPose)
-
-				# Print global coordinates
-				self.publishVisionStatus(
-					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
-					f"y = {newPose.position.y}, z = {newPose.position.z}")
 			else:
 				self.publishVisionStatus(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
 	
