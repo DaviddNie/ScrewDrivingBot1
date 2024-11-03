@@ -120,3 +120,5 @@ int main(int argc, char **argv)
 
 // response:
 // interfaces.srv.ArmCmd_Response(success=False)
+
+// ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'home', point: {x: 0.0, y: 0.0, z: 0.0}}"
