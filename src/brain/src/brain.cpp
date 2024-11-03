@@ -17,11 +17,13 @@
 #include <cmath>
 #include <tf2_ros/transform_listener.h>
 #include <queue>
+#include <condition_variable>
+#include <mutex>
 
 class Brain : public rclcpp::Node
 {
 public:
-	Brain() : Node("brain"), is_busy(false)
+	Brain() : Node("brain"), is_busy(false), movement_finished(true)
 	{
         // Create Mutually Exclusive Callback Groups
         vision_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -85,6 +87,9 @@ private:
 		// TODO: (Movement) Go to Birds-eye pose
 		callMovementModule(home, geometry_msgs::msg::Point());
 			
+        std::unique_lock<std::mutex> lock(movement_mutex_);
+        movement_cv_.wait(lock, [this] { return movement_finished; });
+
 		// Get screw centriods in image frame
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
 
@@ -93,6 +98,10 @@ private:
 		std::queue<geometry_msgs::msg::Pose> centroidQueue;
 		for (const auto& pose : output.poses) {
 			centroidQueue.push(pose);
+		}
+
+		if (centroidQueue.empty()) {
+			publishBrainStatus("ERROR: Queue is empty!!!");
 		}
 
 		// Process each centroid in the queue
@@ -176,6 +185,8 @@ private:
 	}
 
 	int callMovementModule(const std::string &mode, const geometry_msgs::msg::Point point) {
+		void setMovementProcessing();
+
 		auto request = std::make_shared<interfaces::srv::ArmCmd::Request>();
 		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 		request->point = point;
@@ -183,6 +194,8 @@ private:
 		// Wait for the service to be available
 		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
 			publishBrainStatus("End Effector service not available.");
+
+			setMovementFinished();
 			return 0;
 		}
 
@@ -193,11 +206,27 @@ private:
 		if (status == std::future_status::ready) {
 			auto response = result_future.get();
 			publishBrainStatus("Arm Response: " + response->success);
+			
+			setMovementFinished();
 			return response->success;
 		} else {
 			publishBrainStatus("Failed to call Arm service.");
+
+			setMovementFinished();
 			return 0;
 		}
+	}
+
+	// pause execution until movement is finished  
+	void setMovementProcessing() {
+		std::lock_guard<std::mutex> lock(movement_mutex_);
+		movement_finished = false;
+	}
+
+	void setMovementFinished() {
+		std::lock_guard<std::mutex> lock(movement_mutex_);
+		movement_finished = true;
+		movement_cv_.notify_one();
 	}
 
 	int callEndEffectorModule(const std::string &command) {
@@ -294,6 +323,10 @@ private:
 	std::string const tool = "tool";
 
 	bool is_busy;
+	bool movement_finished;
+    std::mutex movement_mutex_;
+    std::condition_variable movement_cv_;
+
 
 	std_msgs::msg::Int32 const success = std_msgs::msg::Int32().set__data(1);
 	std_msgs::msg::Int32 const failure = std_msgs::msg::Int32().set__data(0);
