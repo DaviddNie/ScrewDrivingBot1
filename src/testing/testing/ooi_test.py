@@ -27,8 +27,8 @@ class BrainVisionTest(Node):
 		self.tf_buffer = Buffer()
 		self.tf_listener = TransformListener(self.tf_buffer, self)
 
-		time.sleep(1.5)
-
+		# time.sleep(1.5)
+		self.create_timer(1.0, self.log_available_frames)
 
 		self.vision_status_sub = self.create_subscription(String, 'vision_status', self.vision_status_callback, 10)
 		self.brain_status_sub = self.create_subscription(String, 'brain_status', self.brain_status_callback, 10)
@@ -38,20 +38,18 @@ class BrainVisionTest(Node):
 		while not self.brain_cmd_client.wait_for_service(timeout_sec=1.0):
 			self.get_logger().info('Brain service not available, waiting...')
 
-
+		# self.log_available_frames()
 
 		# self.send_command_request(self.BIRDS_EYE_CMD)
 
-# [INFO] [1730288014.038506720] [vision_test]: Vision Status - Point 1 is at pixel x = 183.86, y = 149.86
-# [INFO] [1730288014.041444540] [vision_test]: Vision Status - Point 2 is at pixel x = 132.65, y = 128.03
-# [INFO] [1730288014.043445586] [vision_test]: Vision Status - Point 3 is at pixel x = 177.87, y = 96.32
-
+# [INFO] [1730630594.316320663] [vision_test]: Received vision data: [(-0.25, -0.04, 0.45), (-0.25, 0.05, 0.45), (-0.17, 0.01, 0.45)]
+# Global coordinates for Point 1: x = -0.24720693874359131, y = -0.038907259702682495, z = 0.45100000500679016
+# Global coordinates for Point 2: x = -0.2499104564189911, y = 0.049868520349264145, z = 0.4519999921321869
+# Global coordinates for Point 3: x = -0.1718184028863907, y = 0.010314073413610458, z = 0.453000009059906
 		self.pose = Pose()
-		self.pose.position.x = 183.86*0.001
-		self.pose.position.y = 149.86*0.001
-		self.pose.position.z = 7.0*0.001
-
-		self.send_OOI_request(self.pose)
+		self.pose.position.x = -0.24720693874359131
+		self.pose.position.y = -0.038907259702682495
+		self.pose.position.z = 0.45100000500679016
 			
 	def send_command_request(self, cmd):
 		try:
@@ -96,15 +94,17 @@ class BrainVisionTest(Node):
 		frame_list = self.tf_buffer.all_frames_as_string()
 		self.get_logger().info(f"Available frames: {frame_list}")
 
+		self.send_OOI_request(self.pose)
+
 	def command_callback(self, future: Future):
 		try:
 			response = future.result()
 			
 			self.get_logger().info(f'Received brain output data: [{response.output.data}]')
 			
-			self.log_available_frames()
+			# self.log_available_frames()
 
-			time.sleep(0.5)
+			# time.sleep(0.5)
 
 			# Look up the transform from "world" to "OOI"
 			try:

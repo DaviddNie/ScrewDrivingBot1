@@ -22,7 +22,7 @@ class OOIServer : public rclcpp::Node
 			initTrans();
 
 			timer_ = this->create_wall_timer(
-					std::chrono::milliseconds(50),
+					std::chrono::milliseconds(10),
 					std::bind(&OOIServer::broadcastTransform, this));
 
 			ooiService = create_service<interfaces::srv::RealCoorCmd>(

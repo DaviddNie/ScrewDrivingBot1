@@ -228,7 +228,7 @@ class VisionServer(Node):
 		self.publishVisionStatus(f"Detected {len(keypoints)} blobs")
 
 		for i, k in enumerate(keypoints):
-			self.publishVisionStatus(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
+			# self.publishVisionStatus(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
 
 			# Convert pixel coordinates to global coordinates
 			global_pose = self.pixel_2_global([int(k.pt[0]), int(k.pt[1])])
@@ -243,6 +243,10 @@ class VisionServer(Node):
 
 				# Add to poseArray
 				poseArray.poses.append(newPose)
+
+				self.publishVisionStatus(
+					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
+					f"y = {newPose.position.y}, z = {newPose.position.z}")
 			else:
 				self.publishVisionStatus(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
 	
@@ -299,7 +303,7 @@ class VisionServer(Node):
 		self.publishVisionStatus(f"Detected {len(keypoints)} blobs")
 
 		for i, k in enumerate(keypoints):
-			self.publishVisionStatus(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
+			# self.publishVisionStatus(f"Point {i + 1} is at pixel x = {k.pt[0]/2:.2f}, y = {k.pt[1]/2:.2f}")
 
 			# Convert pixel coordinates to global coordinates
 			global_pose = self.pixel_2_global([int(k.pt[0]), int(k.pt[1])])
@@ -316,9 +320,9 @@ class VisionServer(Node):
 				poseArray.poses.append(newPose)
 
 				# Print global coordinates
-				self.publishVisionStatus(
-					f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
-					f"y = {newPose.position.y}, z = {newPose.position.z}")
+				# self.publishVisionStatus(
+				# 	f"Global coordinates for Point {i + 1}: x = {newPose.position.x}, "
+				# 	f"y = {newPose.position.y}, z = {newPose.position.z}")
 			else:
 				self.publishVisionStatus(f"Could not convert pixel coordinates for Point {i + 1} to global coordinates.")
 	
