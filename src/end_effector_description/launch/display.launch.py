@@ -8,14 +8,11 @@ from launch_ros.substitutions import FindPackageShare
 
 # Toggle between simulated or real UR5e hardware
 use_fake = True
-use_fake_str = 'true'
 ur_type = 'ur5e'
 ip_address = 'yyy.yyy.yyy.yyy'
 
 if not use_fake:
     ip_address = '192.168.0.100'
-    use_fake_str = 'false'
-
 
 
 def get_realsense_launch():
@@ -44,7 +41,7 @@ def get_ur_control_launch():
     ur_control_launch_args = {
         'ur_type': ur_type,
         'robot_ip': ip_address,
-        'use_fake_hardware': use_fake_str,
+        'use_fake_hardware': use_fake,
         'launch_rviz': 'false',  
         'description_file': end_effector_path,
     }
@@ -66,7 +63,7 @@ def get_moveit_launch():
     moveit_launch_args = {
         'ur_type': ur_type,
         'launch_rviz': 'true', 
-        'use_fake_hardware': use_fake_str,
+        'use_fake_hardware': use_fake,
     }
 
     return TimerAction(
