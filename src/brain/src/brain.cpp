@@ -84,20 +84,20 @@ private:
 	}
 
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
+		publishBrainStatus("Waiting for movement to finish...");
+		
 		// TODO: (Movement) Go to Birds-eye pose
 		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
 		
-		publishBrainStatus("Waiting for movement to finish...");
 
         std::unique_lock<std::mutex> lock(movement_mutex_);
         movement_cv_.wait(lock, [this] { return movement_finished; });
-
-		publishBrainStatus("Movement finished! Continuing...");
 
 		if (!birdseye_movement_success) {
 			publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
 			return failure; 
 		}
+		publishBrainStatus("Movement finished! Continuing...");
 
 		// Get screw centriods in image frame
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
