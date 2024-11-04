@@ -85,7 +85,7 @@ private:
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr text_marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_tool0_;
-    std::shared_ptr<moveit_visual_tools::MoveItVisumalTools> moveit_visual_tools_;
+    std::shared_ptr<moveit_visual_tools::MoveItVisualTools> moveit_visual_tools_;
 
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
         RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
