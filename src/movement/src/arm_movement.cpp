@@ -9,6 +9,7 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <moveit_visual_tools/moveit_visual_tools.h>
 #include <vector>
 #include <sstream>
 #include <cmath>
@@ -49,27 +50,27 @@ public:
         movement_sub_ = this->create_subscription<std_msgs::msg::String>("move_to", 10, std::bind(&ArmMovement::movementCallback, this, std::placeholders::_1));
         movement_done_pub_ = this->create_publisher<std_msgs::msg::String>("done_move", 10);
         movement_status_pub_ = this->create_publisher<std_msgs::msg::String>("arm_status", 10);
-
         text_marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
 
         move_group_interface_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(std::shared_ptr<rclcpp::Node>(this), "ur_manipulator");
         move_group_interface_->setPlanningTime(PLANNING_TIME);
         move_group_interface_->setNumPlanningAttempts(PLANNING_ATTEMPTS);
         move_group_interface_->setGoalTolerance(GOAL_TOLERANCE);
+        move_group_interface_->setStartStateToCurrentState();
 
         setupCollisionObjects();
 
-        // Timer for "tool0" link
-        // timer_tool0_ = this->create_wall_timer(
-        //     std::chrono::milliseconds(500),
-        //     [this]() { this->publishToolPositionText("tool0"); }
-        // );
+        timer_tool0_ = this->create_wall_timer(
+            std::chrono::milliseconds(500),
+            [this]() { this->publishToolPositionText("tool0"); }
+        );
 
-        // Timer for "4231_tool_point" link
-        // timer_tool_point_ = this->create_wall_timer(
-        //     std::chrono::milliseconds(500),
-        //     [this]() { this->publishToolPositionText("4231_tool_point"); }
-        // );
+        moveit_visual_tools_ = std::make_shared<moveit_visual_tools::MoveItVisualTools>(
+            shared_from_this(), "base_link", rviz_visual_tools::RVIZ_MARKER_TOPIC, move_group_interface_->getRobotModel()
+        );
+
+        moveit_visual_tools_->deleteAllMarkers();
+        moveit_visual_tools_->loadRemoteControl();
 
 
         RCLCPP_INFO(this->get_logger(), "ArmMovement node initialized.");
@@ -81,9 +82,8 @@ private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_status_pub_;
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr text_marker_pub_;
-    // rclcpp::TimerBase::SharedPtr timer_tool0_;
-    // rclcpp::TimerBase::SharedPtr timer_tool_point_;
-
+    rclcpp::TimerBase::SharedPtr timer_tool0_;
+    std::shared_ptr<moveit_visual_tools::MoveItVisualTools> moveit_visual_tools_;
 
 
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
@@ -146,7 +146,7 @@ private:
         }
     }
 
-    void setupLineConstraint(moveit_msgs::msg::Constraints& constraints) {
+    void setupLineConstraint(moveit_msgs::msg::Constraints& constraints, const geometry_msgs::msg::Pose& target_pose) {
         moveit_msgs::msg::PositionConstraint line_constraint;
         line_constraint.header.frame_id = "base_link";  // Reference frame for the constraint
         line_constraint.link_name = move_group_interface_->getEndEffectorLink(); // "tool0";  // End effector link
@@ -159,7 +159,7 @@ private:
         line.dimensions = { 0.001, 0.001, 1.0 };  // X,Y,Z
         line_constraint.constraint_region.primitives.emplace_back(line);
 
-        geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
+        auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
         geometry_msgs::msg::Pose line_pose;
         line_pose.position.x = current_pose.position.x;
         line_pose.position.y = current_pose.position.y;
@@ -168,6 +168,11 @@ private:
         
         line_constraint.constraint_region.primitive_poses.emplace_back(line_pose);
         line_constraint.weight = 1.0;
+
+        // Visualize the constraint
+        moveit_visual_tools_->publishLine(current_pose.position, target_pose.position,
+                                        rviz_visual_tools::TRANSLUCENT_DARK);
+        moveit_visual_tools_->trigger();
 
         constraints.position_constraints.emplace_back(line_constraint);
         constraints.name = "use_equality_constraints";
@@ -224,16 +229,26 @@ private:
     void moveToTool() {
         RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
         publishArmStatus("moving to tool");
-        geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
+        auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
+        std::stringstream ss;
+        ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z;
+        publishArmStatus(ss.str());
+
         geometry_msgs::msg::Pose target_pose;
         target_pose.position.x = current_pose.position.x;
-        target_pose.position.y = current_pose.position.y - 0.060059;
-        target_pose.position.x = current_pose.position.z + 0.097457;
+        target_pose.position.y = current_pose.position.y;
+        target_pose.position.z = current_pose.position.z - 0.1;
         target_pose.orientation = DEFAULT_ORIENTATION;
         moveToPose(target_pose, "line");
     }
 
-    void moveToPose(const geometry_msgs::msg::Pose &pose, const std::string &constraintType) {
+    void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType) {
+
+        auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
+        moveit_visual_tools_->deleteAllMarkers();
+        moveit_visual_tools_->publishSphere(current_pose, rviz_visual_tools::RED, 0.05);
+        moveit_visual_tools_->publishSphere(target_pose, rviz_visual_tools::GREEN, 0.05);
+        moveit_visual_tools_->trigger();
 
         moveit_msgs::msg::Constraints constraints;
 
@@ -242,13 +257,13 @@ private:
             setupJointConstraints(constraints);  // Adds joint constraints
         } else if (constraintType == "line") {
             RCLCPP_INFO(this->get_logger(), "Using line constraint along Z-axis.");
-            setupLineConstraint(constraints);  // Adds line constraint
+            setupLineConstraint(constraints, target_pose);  // Adds line constraint
         } else {
             RCLCPP_WARN(this->get_logger(), "Unknown constraint type. Using default joint constraints.");
             setupJointConstraints(constraints);  // Default to joint constraints
         }
 
-        move_group_interface_->setPoseTarget(pose);
+        move_group_interface_->setPoseTarget(target_pose);
         move_group_interface_->setPathConstraints(constraints);
 
         moveit::planning_interface::MoveGroupInterface::Plan plan;
@@ -256,9 +271,9 @@ private:
         if (success) {
             RCLCPP_INFO(this->get_logger(), "Executing move.");
             publishArmStatus("executing now");
-            publishTargetMarker(pose);  // Show target marker
+            publishTargetMarker(target_pose);  // Show target marker
             move_group_interface_->execute(plan);
-            move_group_interface_->stop();
+            // move_group_interface_->stop();
             publishArmStatus("movement done");
             publishArmDone("done");
         } else {
@@ -266,6 +281,7 @@ private:
             publishArmStatus("planninng failed, movement failed");
             publishArmDone("fail");
         }
+
         move_group_interface_->clearPathConstraints();
     }
 
@@ -317,7 +333,6 @@ private:
     }
 
     void publishToolPositionText(const std::string &link_name) {
-        // auto endEffector = move_group_interface_->getEndEffectorLink() // "tool0";  // End effector link
         auto tool_pose = move_group_interface_->getCurrentPose(link_name).pose;
         
         // Prepare a text marker to display the position
