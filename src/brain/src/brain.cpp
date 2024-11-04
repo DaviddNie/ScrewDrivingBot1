@@ -5,6 +5,7 @@
 #include "interfaces/srv/brain_routine_cmd.hpp"
 #include "interfaces/srv/end_effector_cmd.hpp"
 #include "interfaces/srv/real_coor_cmd.hpp"
+#include "interfaces/srv/publish_ooi_cmd.hpp"
 #include <string>
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int32.hpp"
@@ -54,7 +55,7 @@ public:
 		armClient_ = create_client<interfaces::srv::ArmCmd>(
 			"arm_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
 
-		ooiServerClient_ = create_client<interfaces::srv::RealCoorCmd>(
+		ooiServerClient_ = create_client<interfaces::srv::PublishOoiCmd>(
 			"ooi_srv", rmw_qos_profile_services_default, ooi_cb_group_);
 
 		publishBrainStatus("Brain Node initiated");
@@ -126,6 +127,13 @@ private:
 			// TODO: (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link)
 			bool status = callOOIModule(currentCentroid);
 
+			if (!status) {
+				publishBrainStatus("ERROR: OOI Module failed to establish `OOI` Frame");
+				return failure; 
+			}
+
+			geometry_msgs::msg::Pose realPose = getRealPoseFromTF();
+
 			// TODO: (Movement) Move to 0.3 in z-axis
 
 			// TODO: (Movement) Move to (x y 0.3)
@@ -148,6 +156,10 @@ private:
 
 		publishBrainStatus("Screwdriving Routine Complete");
 		return success;
+	}
+
+	geometry_msgs::msg::Pose getRealPoseFromTF() {
+
 	}
 
 	void processBrainService(const std::shared_ptr<interfaces::srv::BrainCmd::Request> request,
@@ -266,7 +278,7 @@ private:
 
 	
 	bool callOOIModule(const geometry_msgs::msg::Pose input) {
-		auto request = std::make_shared<interfaces::srv::RealCoorCmd::Request>();
+		auto request = std::make_shared<interfaces::srv::PublishOoiCmd::Request>();
 		request->img_pose = input;
 
 		auto future_result = ooiServerClient_->async_send_request(request);
@@ -295,7 +307,7 @@ private:
 	rclcpp::Client<interfaces::srv::ArmCmd>::SharedPtr armClient_;
 
 
-	rclcpp::Client<interfaces::srv::RealCoorCmd>::SharedPtr ooiServerClient_;
+	rclcpp::Client<interfaces::srv::PublishOoiCmd>::SharedPtr ooiServerClient_;
 
 	// Module constants
 	std::string const visionModule = "vision";

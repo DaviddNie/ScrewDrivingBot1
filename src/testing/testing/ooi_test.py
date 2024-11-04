@@ -51,6 +51,12 @@ class BrainVisionTest(Node):
 		self.pose.position.y = -0.038907259702682495
 		self.pose.position.z = 0.45100000500679016
 			
+# Testing Result
+# Transform: 0.38624999499321, 0.5585469387127453, 0.03341625958812279
+
+# Close of Actual number:
+# // "{mode: 'hole', point: {x: 0.32, y: 0.55, z: 0.1}}"
+  
 	def send_command_request(self, cmd):
 		try:
 			command_request = BrainCmd.Request()

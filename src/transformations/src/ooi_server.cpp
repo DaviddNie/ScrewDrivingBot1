@@ -10,6 +10,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <tf2_ros/buffer.h>
 #include "interfaces/srv/real_coor_cmd.hpp"
+#include "interfaces/srv/publish_ooi_cmd.hpp"
 #include "std_msgs/msg/string.hpp"
 
 class OOIServer : public rclcpp::Node
@@ -25,7 +26,7 @@ class OOIServer : public rclcpp::Node
 					std::chrono::milliseconds(10),
 					std::bind(&OOIServer::broadcastTransform, this));
 
-			ooiService = create_service<interfaces::srv::RealCoorCmd>(
+			ooiService = create_service<interfaces::srv::PublishOoiCmd>(
 				"ooi_srv",
 				std::bind(&OOIServer::processOOIService, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -46,8 +47,8 @@ class OOIServer : public rclcpp::Node
 			transform_stamped.transform.rotation.w = 1.0;
 		}
 
-		void processOOIService(const std::shared_ptr<interfaces::srv::RealCoorCmd::Request> request,
-				 std::shared_ptr<interfaces::srv::RealCoorCmd::Response> response) {
+		void processOOIService(const std::shared_ptr<interfaces::srv::PublishOoiCmd::Request> request,
+				 std::shared_ptr<interfaces::srv::PublishOoiCmd::Response> response) {
 			publishServerStatus("OOI Server: Request received");
 			
 			geometry_msgs::msg::Pose inputPose = request->img_pose;
@@ -93,7 +94,7 @@ class OOIServer : public rclcpp::Node
 
 		std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
 
-		rclcpp::Service<interfaces::srv::RealCoorCmd>::SharedPtr ooiService;
+		rclcpp::Service<interfaces::srv::PublishOoiCmd>::SharedPtr ooiService;
 		geometry_msgs::msg::TransformStamped transform_stamped;
 
 		rclcpp::Publisher<std_msgs::msg::String>::SharedPtr ooiServerStatusPublisher;
