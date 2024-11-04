@@ -1,4 +1,5 @@
 string module
 string command
+geometry_msgs/Pose pose
 ---
 std_msgs/Int32 output
