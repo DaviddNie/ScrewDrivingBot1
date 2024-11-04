@@ -57,7 +57,7 @@ def generate_launch_description():
                                description='Use simulation time if true'),
 
         brain_node,
-        # robotAndCamera,
+        robotAndCamera,
         vision,
         # end_effector,
         transformations,

@@ -127,7 +127,7 @@ private:
 
 			publishBrainStatus("Processing (" + std::to_string(x) + "," + std::to_string(y) + ")");
 
-			// TODO: (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link)
+			// (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link)
 			bool status = callOOIModule(currentCentroid);
 
 			if (!status) {
@@ -142,10 +142,13 @@ private:
 				return failure; 
 			}
 
-			// TODO: (Movement) Move to 0.3 in z-axis
-			callMovementModule(hole, )
+			// (Movement) Move to (x y 0.3)
+			// status = callMovementModule(hole, realPose.position);
 
-			// TODO: (Movement) Move to (x y 0.3)
+			if (!status) {
+				publishBrainStatus("ERROR: Move to 0.3 in z failed");
+				return failure; 
+			}
 
 			// TODO: (Vision) Fine-tune
 
