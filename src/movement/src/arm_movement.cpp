@@ -86,7 +86,7 @@ private:
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr text_marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_tool0_;
     std::shared_ptr<moveit_visual_tools::MoveItVisumalTools> moveit_visual_tools_;
-mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
         RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
         std::stringstream ss;
@@ -227,20 +227,25 @@ mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
         return false;
     }
 
-    void moveToTool() {
-        RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
-        publishArmStatus("moving to tool");
-        auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
-        std::stringstream ss;
-        ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z;
-        publishArmStatus(ss.str());
+    void moveToTool(const std::string& data) {
+        double x, y, z;
+        if (parseCoordinates(data, x, y, z)) {
+            RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
+            publishArmStatus("moving to tool");
+            auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
 
-        geometry_msgs::msg::Pose target_pose;
-        target_pose.position.x = current_pose.position.x;
-        target_pose.position.y = current_pose.position.y;
-        target_pose.position.z = current_pose.position.z - 0.1;
-        target_pose.orientation = DEFAULT_ORIENTATION;
-        moveToPose(target_pose, "line");
+            geometry_msgs::msg::Pose target_pose;
+            target_pose.position.x = current_pose.position.x;
+            target_pose.position.y = current_pose.position.y;
+            target_pose.position.z = current_pose.position.z + z;
+            target_pose.orientation = DEFAULT_ORIENTATION;
+
+            std::stringstream ss;
+            ss << "Moving to hole position at x: " << target_pose.position.x << ", y: " << target_pose.position.y << ", z: " << target_pose.position.z;
+            publishArmStatus(ss.str());
+
+            moveToPose(target_pose, "line");
+        }
     }
 
     // void moveToTool() {
