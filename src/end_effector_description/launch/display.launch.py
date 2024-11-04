@@ -26,13 +26,12 @@ def get_realsense_launch():
     return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(realsense_launch_path),
         launch_arguments={
-            'align_depth': 'true',
+            'align_depth.enable': 'true',
             'enable_color': 'true',
             'enable_depth': 'true',
             'pointcloud.enable': 'true'
         }.items()
     )
-
 
 def get_ur_control_launch():
     """Configure UR control launch for the UR5e arm."""

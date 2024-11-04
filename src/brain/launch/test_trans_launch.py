@@ -13,6 +13,7 @@ def generate_launch_description():
 
     os.environ["XDG_SESSION_TYPE"] = "xcb"
     
+    
     brain_node = Node(
             package='brain',
             executable='brain',  # Replace with the actual executable name
@@ -24,7 +25,7 @@ def generate_launch_description():
     robotAndCamera = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([os.path.join(
                 get_package_share_directory('end_effector_description'), 'launch'),
-                '/display.launch.py'])
+                '/end_effector_withModel.launch.py'])
             )
     vision = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([os.path.join(
@@ -32,23 +33,26 @@ def generate_launch_description():
                 '/vision_launch.py'])
             )
     
+    end_effector = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([os.path.join(
+                get_package_share_directory('end_effector'), 'launch'),
+                '/end_effector_launch.py'])
+            )
+    
     transformations = IncludeLaunchDescription(
             PythonLaunchDescriptionSource([os.path.join(
                 get_package_share_directory('transformations'), 'launch'),
                 '/transformations_launch.py'])
             )
-    arm = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('movement'), 'launch'),
-                '/arm_launch.py'])
-            )
+    
     return LaunchDescription([
         # Declare launch arguments (optional)
         DeclareLaunchArgument('use_sim_time', default_value='false', 
                                description='Use simulation time if true'),
-        arm,
+
         brain_node,
         robotAndCamera,
         vision,
+        # end_effector,
         transformations,
     ])

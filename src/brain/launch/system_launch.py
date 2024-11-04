@@ -60,5 +60,5 @@ def generate_launch_description():
         vision,
         end_effector,
         arm,
-        # transformations,
+        transformations,
     ])

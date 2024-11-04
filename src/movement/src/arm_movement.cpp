@@ -74,7 +74,6 @@ public:
         moveit_visual_tools_->deleteAllMarkers();
         moveit_visual_tools_->loadRemoteControl();
 
-
         RCLCPP_INFO(this->get_logger(), "ArmMovement node initialized.");
     }
 
@@ -198,7 +197,7 @@ private:
             std::stringstream ss;
             ss << "Moving to hole position at x: " << x << ", y: " << y << ", z: " << z;
             publishArmStatus(ss.str());
-            
+          
             // shift from tool0 to tool point
             geometry_msgs::msg::Pose target_pose;
             target_pose.position.x = x;

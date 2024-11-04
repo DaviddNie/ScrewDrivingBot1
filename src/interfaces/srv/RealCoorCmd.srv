@@ -1,0 +1,3 @@
+string command
+---
+geometry_msgs/Pose real_pose
