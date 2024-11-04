@@ -17,7 +17,6 @@ if not use_fake:
     use_fake_str = 'false'
 
 
-
 def get_realsense_launch():
     """Setup Realsense camera launch if using real hardware."""
     realsense_launch_path = os.path.join(
@@ -33,7 +32,6 @@ def get_realsense_launch():
             'pointcloud.enable': 'true'
         }.items()
     )
-
 
 def get_ur_control_launch():
     """Configure UR control launch for the UR5e arm."""

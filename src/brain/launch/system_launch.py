@@ -59,5 +59,6 @@ def generate_launch_description():
         robotAndCamera,
         vision,
         end_effector,
+        arm,
         transformations,
     ])

@@ -30,10 +30,11 @@ Followed by specific srv calls to test (make sure terminal is sourced):
 ![joint angle example](<img/joint_angle.png>)
 
 ![joint angle example2](img/joint_angle_2.png)
+
 ## TODO: 
 - Create line constraint for the hole/tool commands so that they move linearly along a line path/plane and not in an arc.
 
-##
+=======
 ![alt text](<img/linear.png>)
 
 

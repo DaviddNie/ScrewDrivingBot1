@@ -163,7 +163,6 @@ private:
 			// callEndEffectorModule(startScrewDiving);
 			// callEndEffectorModule(turnLightOff);
 
-
 		}
 
 		publishBrainStatus("Screwdriving Routine Complete");
@@ -232,11 +231,11 @@ private:
 
 	int callMovementModule(const std::string &mode, const geometry_msgs::msg::Point point) {
 		setMovementProcessing();
-
 		auto request = std::make_shared<interfaces::srv::ArmCmd::Request>();
 		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 		request->point = point;
 		
+
 		// // Wait for the service to be available
 		// if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
 		// 	publishBrainStatus("End Effector service not available.");

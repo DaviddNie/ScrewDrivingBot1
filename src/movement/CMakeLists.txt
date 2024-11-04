@@ -15,13 +15,14 @@ find_package(moveit REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_visual_tools REQUIRED)
+find_package(graph_msgs REQUIRED)
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
 add_executable(arm_movement src/arm_movement.cpp)
-ament_target_dependencies(arm_movement rclcpp std_msgs moveit moveit_msgs moveit_ros_planning_interface)
+ament_target_dependencies(arm_movement rclcpp std_msgs moveit moveit_msgs moveit_ros_planning_interface graph_msgs moveit_visual_tools interfaces)
 
 add_executable(arm_brain src/arm_brain.cpp)
 ament_target_dependencies(arm_brain rclcpp std_msgs interfaces)
