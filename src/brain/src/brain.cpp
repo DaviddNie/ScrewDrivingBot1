@@ -142,10 +142,16 @@ private:
 				return failure; 
 			}
 
+			publishBrainStatus("Pose is valid");
 
-// Transform: x= 0.265584, y=0.522151, z=0.932978
 			// Manually set z to 0.3
 			realPose.position.z = 0.3;
+			realPose.position.x = realPose.position.x - 0.1;
+			realPose.position.y = realPose.position.y - 0.15;
+
+			publishBrainStatus("Transform: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
+				", z=" + std::to_string(realPose.position.z));
+			
 			// (Movement) Move to (x y 0.3)
 			status = callMovementModule(hole, realPose.position);
 
@@ -154,6 +160,7 @@ private:
 				return failure; 
 			}
 
+			break;
 			// TODO: (Vision) Fine-tune
 
 			// TODO: (Movement) Move to (new_x, new_y, 0.3)

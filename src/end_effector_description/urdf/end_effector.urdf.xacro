@@ -28,7 +28,7 @@
       <parent link="${parent}"/>
       <child link="${prefix}base_link"/>
 
-      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
     </joint>
 
     <!-- Define a link for mesh base_link.STL. -->

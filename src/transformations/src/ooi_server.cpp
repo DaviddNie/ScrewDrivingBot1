@@ -91,7 +91,6 @@ class OOIServer : public rclcpp::Node
 				response->real_pose.position.y = y;
 				response->real_pose.position.z = z;
 
-				publishServerStatus("Transform: x= " + std::to_string(x) + ", y=" + std::to_string(y) + ", z=" + std::to_string(z));
 				publishServerStatus("TF Server: Processing complete!");
 			}
 			catch (const tf2::TransformException & ex)
@@ -169,3 +168,50 @@ int main(int argc, char **argv)
 // ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'home', point: {x: 0.0, y: 0.0, z: 0.0}}"
 
 // Transform: x= 0.445403, y=0.513971, z=0.022418
+
+// Ground Truth
+// ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.38, y: 0.3, z: 0.3}}"
+
+// Test after tuning
+
+//  Transform: x= 0.449440, y=0.513022, z=0.019677
+// x= 0.447579, y=0.513695, z=0.020506
+// Transform: x= 0.235417, y=0.579198, z=0.020389
+// x= 0.233571, y=0.580123, z=0.020485
+// x= 0.230881, y=0.578295, z=0.022316
+// x= 0.448046, y=0.483478, z=0.019652
+
+//  Transform: x= 0.248034, y=0.392805, z=0.020505
+// Transform: x= 0.248632, y=0.483991, z=0.020801
+// Transform: x= 0.450061, y=0.393995, z=0.019845
+
+// Transform: x= 0.322784, y=0.279542, z=0.004010
+
+// Transform: x= 0.323748, y=0.282129, z=0.000611
+// x= 0.317764, y=0.274401, z=0.002971
+
+// Transform: x= 0.602476, y=0.414721, z=0.020102
+
+// with pos x
+// Transform: x= 0.603776, y=0.454314, z=0.020353
+
+//ground truth
+// x: 0.5024, y: 0.2647, z: 0.4
+
+// with neg x
+// x= 0.601468, y=0.416548, z=0.021305
+
+// test2
+
+// Transform: x= 0.373479, y=0.526225, z=0.020193
+
+//ground truth
+// os2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.27, y: 0.3762, z: 0.2}}"
+
+// x - 0.1
+// y - 0.15
+
+
+// brain test
+
+// x= 0.270318, y=0.376349, z=0.300000
