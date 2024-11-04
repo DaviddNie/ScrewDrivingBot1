@@ -108,11 +108,6 @@ class BrainVisionTest(Node):
 			
 			self.get_logger().info(f'Received brain output data: [{response.output.data}]')
 			
-			# self.log_available_frames()
-
-			# time.sleep(0.5)
-
-			# Look up the transform from "world" to "OOI"
 			try:
 				transform_stamped: TransformStamped = self.tf_buffer.lookup_transform("base_link", "OOI", rclpy.time.Time())
 				

@@ -58,6 +58,9 @@ public:
 		ooiServerClient_ = create_client<interfaces::srv::PublishOoiCmd>(
 			"ooi_srv", rmw_qos_profile_services_default, ooi_cb_group_);
 
+		tfServerClient_ = create_client<interfaces::srv::RealCoorCmd>(
+			"tf_srv", rmw_qos_profile_services_default, ooi_cb_group_);
+
 		publishBrainStatus("Brain Node initiated");
 	}
 
@@ -134,7 +137,13 @@ private:
 
 			geometry_msgs::msg::Pose realPose = getRealPoseFromTF();
 
+			if (checkInvalidPose(realPose)) {
+				publishBrainStatus("ERROR: TF Transform from OOI to base_link is invalid");
+				return failure; 
+			}
+
 			// TODO: (Movement) Move to 0.3 in z-axis
+			callMovementModule(hole, )
 
 			// TODO: (Movement) Move to (x y 0.3)
 
@@ -159,9 +168,22 @@ private:
 	}
 
 	geometry_msgs::msg::Pose getRealPoseFromTF() {
+		auto request = std::make_shared<interfaces::srv::RealCoorCmd::Request>();
+		request->command = default_;
 
+		auto future_result = tfServerClient_->async_send_request(request);
+        
+		geometry_msgs::msg::Pose result = future_result.get()->real_pose;
+        
+		return result;
 	}
 
+	bool checkInvalidPose(geometry_msgs::msg::Pose pose) {
+		return pose.position.x == 0.0 &&
+           pose.position.y == 0.0 &&
+           pose.position.z == 0.0;
+	}
+	
 	void processBrainService(const std::shared_ptr<interfaces::srv::BrainCmd::Request> request,
 				 std::shared_ptr<interfaces::srv::BrainCmd::Response> response) {
 		std::string module = request->module;
@@ -308,6 +330,7 @@ private:
 
 
 	rclcpp::Client<interfaces::srv::PublishOoiCmd>::SharedPtr ooiServerClient_;
+	rclcpp::Client<interfaces::srv::RealCoorCmd>::SharedPtr tfServerClient_;
 
 	// Module constants
 	std::string const visionModule = "vision";
@@ -332,6 +355,9 @@ private:
 	std::string const home = "home";
 	std::string const hole = "hole";
 	std::string const tool = "tool";
+
+	// tf server commands
+	std::string const default_ = "default";
 
 	bool is_busy;
 	bool movement_finished;

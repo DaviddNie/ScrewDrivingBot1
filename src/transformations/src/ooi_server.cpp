@@ -12,6 +12,8 @@
 #include "interfaces/srv/real_coor_cmd.hpp"
 #include "interfaces/srv/publish_ooi_cmd.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
 
 class OOIServer : public rclcpp::Node
 {
@@ -22,6 +24,9 @@ class OOIServer : public rclcpp::Node
 
 			initTrans();
 
+			tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+			tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
 			timer_ = this->create_wall_timer(
 					std::chrono::milliseconds(10),
 					std::bind(&OOIServer::broadcastTransform, this));
@@ -29,6 +34,10 @@ class OOIServer : public rclcpp::Node
 			ooiService = create_service<interfaces::srv::PublishOoiCmd>(
 				"ooi_srv",
 				std::bind(&OOIServer::processOOIService, this, std::placeholders::_1, std::placeholders::_2));
+
+			tfService = create_service<interfaces::srv::RealCoorCmd>(
+				"tf_srv",
+				std::bind(&OOIServer::processTFService, this, std::placeholders::_1, std::placeholders::_2));
 
 			ooiServerStatusPublisher = this->create_publisher<std_msgs::msg::String>
 				("ooi_server_status", 10);
@@ -64,6 +73,37 @@ class OOIServer : public rclcpp::Node
 			publishServerStatus("OOI Server: Processing complete!");
 		}
 
+		void processTFService(const std::shared_ptr<interfaces::srv::RealCoorCmd::Request> request,
+				 std::shared_ptr<interfaces::srv::RealCoorCmd::Response> response) {
+			publishServerStatus("TF Server: Request received");
+			
+			try
+			{
+				// Attempt to look up the transform from "base_link" to "OOI"
+				geometry_msgs::msg::TransformStamped transformStamped = 
+					tf_buffer_->lookupTransform("base_link", "OOI", rclcpp::Time(0));
+				
+				double x = transformStamped.transform.translation.x;
+				double y = transformStamped.transform.translation.y;
+				double z = transformStamped.transform.translation.z;
+
+				response->real_pose.position.x = x;
+				response->real_pose.position.y = y;
+				response->real_pose.position.z = z;
+
+				publishServerStatus("Transform: x= " + std::to_string(x) + ", y=" + std::to_string(y) + ", z=" + std::to_string(z));
+				publishServerStatus("TF Server: Processing complete!");
+			}
+			catch (const tf2::TransformException & ex)
+			{
+				publishServerStatus("ERROR: Transform failed - " + std::string(ex.what()));
+
+				// Default -> invalid
+				response->real_pose = geometry_msgs::msg::Pose();			
+			}
+
+		}
+
 		void processAndSendTransform(double x, double y, double z) {
 			// This is messed up, we succeed by trial and error
 			// the weird order of "xyz" come from the orientation of the camera with respect to OOI
@@ -95,11 +135,15 @@ class OOIServer : public rclcpp::Node
 		std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
 
 		rclcpp::Service<interfaces::srv::PublishOoiCmd>::SharedPtr ooiService;
+		rclcpp::Service<interfaces::srv::RealCoorCmd>::SharedPtr tfService;
 		geometry_msgs::msg::TransformStamped transform_stamped;
 
 		rclcpp::Publisher<std_msgs::msg::String>::SharedPtr ooiServerStatusPublisher;
 
 		rclcpp::TimerBase::SharedPtr timer_;
+
+		std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
+		std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 };
 
 int main(int argc, char **argv)
