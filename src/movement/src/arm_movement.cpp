@@ -53,6 +53,7 @@ public:
         text_marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
 
         move_group_interface_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(std::shared_ptr<rclcpp::Node>(this), "ur_manipulator");
+        move_group_interface_->setPlannerId("LIN");
         move_group_interface_->setPlanningTime(PLANNING_TIME);
         move_group_interface_->setNumPlanningAttempts(PLANNING_ATTEMPTS);
         move_group_interface_->setGoalTolerance(GOAL_TOLERANCE);
@@ -243,6 +244,7 @@ private:
     }
 
     void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType) {
+        move_group_interface_->clearPathConstraints();
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
         moveit_visual_tools_->deleteAllMarkers();
