@@ -21,6 +21,7 @@
 - ~~brain_routine_test sometimes send two commands to brain~~  
   - ~~need to add `is_busy` support in brain~~
 ### Recent Updates
+- [Week 9 Mon][David] Add `OOI` frame that indicates the screwhole, add transformation to real-coordinate support
 - [Week 8 Wed][David] Add support for converting to RealCoor with respect to base_link, bring back transformation pkg
 - [Week 8 Wed][David] Fix centroid locating algo
 - [Week 8 Tue][David] enable collosion check, add toolpoint_link and camera_link, deprecated transformation pkg
@@ -42,7 +43,9 @@
 ### ROS Packages
 - **movement**  
   (services and publisher model for communicating with the UR5e)  
-  - N/A
+  - arm_brain
+  - arm_movement
+  - `README.md` (for movement)
 - **vision**  
   (Centroid locating services and publisher model)  
   - Vision Server
@@ -58,14 +61,18 @@
   (Custom messages and services)
   - Src
 	- BrainCmd (for testing individual packages)
-	- VisionCmd
-	- EndEffectorCmd
+	- VisionCmd (interface with Vision Module)
+	- EndEffectorCmd 
+	- ArmCmd (interface with Moveit and UR5e)
+	- BrainRoutineCmd (run the closed-loop operation)
+	- PublishOoiCmd (publish a frame `OOI` that indicates the target screwhole)
+	- RealCoorCmd (converting to coordinate with respect to `base_link`)
   - Msg
 	- N/A
 - **transformations**
   (Static Transformations publishers)
   ~~- camera_dy_trans (dy_broadcaster bewteen camera_socket and camera)~~
-  - ooi_server (convert to RealCoor with respect to base_link)
+  - ooi_server (publish `OOI`, convert to RealCoor with respect to base_link)
 ### Others
 - end_effector visualisation in Rviz
 
