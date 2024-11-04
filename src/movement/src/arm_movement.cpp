@@ -7,6 +7,8 @@
 #include <moveit_msgs/msg/constraints.hpp>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <vector>
 #include <sstream>
 #include <cmath>
@@ -14,7 +16,7 @@
 // Constants for Cartesian path toggle and tolerance values
 constexpr double PLANNING_TIME = 20.0;
 constexpr int PLANNING_ATTEMPTS = 15;
-constexpr double GOAL_TOLERANCE = 0.01;
+constexpr double GOAL_TOLERANCE = 0.0005; // 0.5 mm, 0.0005 m
 
 // Structure for joint constraint configuration
 struct JointConstraintConfig {
@@ -23,11 +25,11 @@ struct JointConstraintConfig {
 
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
-    { "shoulder_pan_joint",  0,  M_PI / 3,  M_PI / 3 },
-    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2,  M_PI /2},
+    { "shoulder_pan_joint",  0,  M_PI / 2,  M_PI / 2 },
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2.5,  M_PI /2.5},
     // { "elbow_joint",          0,  M_PI,  M_PI },
     { "wrist_1_joint",           M_PI/2,      M_PI*4/5,      M_PI*4/5},
-    { "wrist_2_joint",              0,  M_PI/2,  M_PI/2 },
+    { "wrist_2_joint",              0,  M_PI/1.5,  M_PI/1.5 },
     { "wrist_3_joint",        M_PI / 2,  M_PI / 2,  M_PI / 2 }
 };
 
@@ -48,12 +50,27 @@ public:
         movement_done_pub_ = this->create_publisher<std_msgs::msg::String>("done_move", 10);
         movement_status_pub_ = this->create_publisher<std_msgs::msg::String>("arm_status", 10);
 
+        text_marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
+
         move_group_interface_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(std::shared_ptr<rclcpp::Node>(this), "ur_manipulator");
         move_group_interface_->setPlanningTime(PLANNING_TIME);
         move_group_interface_->setNumPlanningAttempts(PLANNING_ATTEMPTS);
         move_group_interface_->setGoalTolerance(GOAL_TOLERANCE);
 
         setupCollisionObjects();
+
+        // Timer for "tool0" link
+        // timer_tool0_ = this->create_wall_timer(
+        //     std::chrono::milliseconds(500),
+        //     [this]() { this->publishToolPositionText("tool0"); }
+        // );
+
+        // Timer for "4231_tool_point" link
+        // timer_tool_point_ = this->create_wall_timer(
+        //     std::chrono::milliseconds(500),
+        //     [this]() { this->publishToolPositionText("4231_tool_point"); }
+        // );
+
 
         RCLCPP_INFO(this->get_logger(), "ArmMovement node initialized.");
     }
@@ -63,6 +80,11 @@ private:
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_done_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr movement_status_pub_;
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr text_marker_pub_;
+    // rclcpp::TimerBase::SharedPtr timer_tool0_;
+    // rclcpp::TimerBase::SharedPtr timer_tool_point_;
+
+
 
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
         RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
@@ -73,7 +95,7 @@ private:
         if (msg->data == "home") {
             moveToHome();
         } else if (msg->data.rfind("hole", 0) == 0) {
-            processHoleCommand(msg->data);
+            moveToHole(msg->data);
         } else if (msg->data == "tool") {
             moveToTool();
         }
@@ -127,24 +149,15 @@ private:
     void setupLineConstraint(moveit_msgs::msg::Constraints& constraints) {
         moveit_msgs::msg::PositionConstraint line_constraint;
         line_constraint.header.frame_id = "base_link";  // Reference frame for the constraint
-        line_constraint.link_name = "4231_tool_link";
+        line_constraint.link_name = move_group_interface_->getEndEffectorLink(); // "tool0";  // End effector link
+
+        RCLCPP_INFO(this->get_logger(), "Header frame: %s", line_constraint.header.frame_id.c_str());
+        RCLCPP_INFO(this->get_logger(), "End effector link: %s", line_constraint.link_name.c_str());
 
         shape_msgs::msg::SolidPrimitive line;
         line.type = shape_msgs::msg::SolidPrimitive::BOX;
-        line.dimensions = { 0.0005, 0.0005, 1.0 };  // X,Y,Z
+        line.dimensions = { 0.001, 0.001, 1.0 };  // X,Y,Z
         line_constraint.constraint_region.primitives.emplace_back(line);
-
-        // Define the box position offset to indicate the starting point along the Z-axis
-        geometry_msgs::msg::Pose box_pose;
-        box_pose.position.x = 0.0;  // Centered along X-axis
-        box_pose.position.y = 0.0;  // Centered along Y-axis
-        box_pose.position.z = 0.5;  // Starting Z position (modify as needed)
-
-        line_constraint.constraint_region.primitive_poses.push_back(box_pose);
-        line_constraint.weight = 1.0;
-
-        // Add this line constraint to the position constraints
-        constraints.position_constraints.push_back(line_constraint);
 
         geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
         geometry_msgs::msg::Pose line_pose;
@@ -152,9 +165,14 @@ private:
         line_pose.position.y = current_pose.position.y;
         line_pose.position.z = current_pose.position.z;
         line_pose.orientation = DEFAULT_ORIENTATION;
-        line_constraint.weight = 1.0;
+        
         line_constraint.constraint_region.primitive_poses.emplace_back(line_pose);
+        line_constraint.weight = 1.0;
+
+        constraints.position_constraints.emplace_back(line_constraint);
+        constraints.name = "use_equality_constraints";
     }
+
 
 
     void moveToHome() {
@@ -168,19 +186,20 @@ private:
         moveToPose(home_pose, "joint");
     }
 
-    void processHoleCommand(const std::string& data) {
+    void moveToHole(const std::string& data) {
         double x, y, z;
         if (parseCoordinates(data, x, y, z)) {
             std::stringstream ss;
             ss << "Moving to hole position at x: " << x << ", y: " << y << ", z: " << z;
             publishArmStatus(ss.str());
-
+            
+            // shift from tool0 to tool point
             geometry_msgs::msg::Pose target_pose;
             target_pose.position.x = x;
-            target_pose.position.y = y;
-            target_pose.position.z = z;
+            target_pose.position.y = y - 0.060059;
+            target_pose.position.z = z + 0.097457;
             target_pose.orientation = DEFAULT_ORIENTATION;
-            moveToPose(target_pose, "line");
+            moveToPose(target_pose, "joint");
         }
     }
 
@@ -207,14 +226,15 @@ private:
         publishArmStatus("moving to tool");
         geometry_msgs::msg::Pose current_pose = move_group_interface_->getCurrentPose().pose;
         geometry_msgs::msg::Pose target_pose;
-        target_pose.position.x = current_pose.position.x + 0.620;
-        target_pose.position.y = current_pose.position.y;
-        target_pose.position.z = 0.3;
+        target_pose.position.x = current_pose.position.x;
+        target_pose.position.y = current_pose.position.y - 0.060059;
+        target_pose.position.x = current_pose.position.z + 0.097457;
         target_pose.orientation = DEFAULT_ORIENTATION;
         moveToPose(target_pose, "line");
     }
 
     void moveToPose(const geometry_msgs::msg::Pose &pose, const std::string &constraintType) {
+
         moveit_msgs::msg::Constraints constraints;
 
         if (constraintType == "joint") {
@@ -236,6 +256,7 @@ private:
         if (success) {
             RCLCPP_INFO(this->get_logger(), "Executing move.");
             publishArmStatus("executing now");
+            publishTargetMarker(pose);  // Show target marker
             move_group_interface_->execute(plan);
             move_group_interface_->stop();
             publishArmStatus("movement done");
@@ -247,6 +268,17 @@ private:
         }
         move_group_interface_->clearPathConstraints();
     }
+
+    // Creates a pose at a given positional offset from the current pose
+    // https://moveit.picknik.ai/humble/doc/how_to_guides/using_ompl_constrained_planning/ompl_constrained_planning.html
+    // auto get_relative_pose = [current_pose](double x, double y, double z) {
+    //     auto current_pose = move_group_interface.getCurrentPose();
+    //     auto target_pose = current_pose;
+    //     target_pose.pose.position.x += x;
+    //     target_pose.pose.position.y += y;
+    //     target_pose.pose.position.z += z;
+    //     return target_pose;
+    // };
 
     void publishArmDone(const std::string &done)
     {
@@ -261,6 +293,60 @@ private:
         status_msg.data = status;
         movement_status_pub_->publish(status_msg);
         RCLCPP_INFO(this->get_logger(), "Published arm status: %s", status.c_str());
+    }
+
+    void publishTargetMarker(const geometry_msgs::msg::Pose &target_pose) {
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = "base_link";  // Use the correct frame
+        marker.header.stamp = rclcpp::Clock().now();
+        marker.ns = "target_marker";
+        marker.id = 0;
+        marker.type = visualization_msgs::msg::Marker::SPHERE;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+
+        marker.pose = target_pose;
+        marker.scale.x = 0.05;  // Size of the marker
+        marker.scale.y = 0.05;
+        marker.scale.z = 0.05;
+        marker.color.a = 1.0;   // Alpha
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+
+        text_marker_pub_->publish(marker);
+    }
+
+    void publishToolPositionText(const std::string &link_name) {
+        // auto endEffector = move_group_interface_->getEndEffectorLink() // "tool0";  // End effector link
+        auto tool_pose = move_group_interface_->getCurrentPose(link_name).pose;
+        
+        // Prepare a text marker to display the position
+        visualization_msgs::msg::Marker text_marker;
+        text_marker.header.frame_id = "base_link";
+        text_marker.header.stamp = this->get_clock()->now();
+        text_marker.ns = "tool_position";
+        text_marker.id = 0;
+        text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+        text_marker.action = visualization_msgs::msg::Marker::ADD;
+
+        // Position the text near the tool
+        text_marker.pose.position.x = tool_pose.position.x;
+        text_marker.pose.position.y = tool_pose.position.y;
+        text_marker.pose.position.z = tool_pose.position.z + 0.1;  // Offset above tool0 position
+        text_marker.pose.orientation.w = 1.0;
+
+        // Customize the text and appearance
+        std::stringstream ss;
+        ss << "X: " << tool_pose.position.x << "\nY: " << tool_pose.position.y << "\nZ: " << tool_pose.position.z;
+        text_marker.text = ss.str();
+        text_marker.scale.z = 0.05;  // Text height
+        text_marker.color.r = 1.0;
+        text_marker.color.g = 1.0;
+        text_marker.color.b = 1.0;
+        text_marker.color.a = 1.0;
+
+        // Publish the text marker
+        text_marker_pub_->publish(text_marker);
     }
 };
 
