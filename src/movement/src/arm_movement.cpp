@@ -10,6 +10,7 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <moveit_visual_tools/moveit_visual_tools.h>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <vector>
 #include <sstream>
 #include <cmath>
@@ -84,9 +85,8 @@ private:
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group_interface_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr text_marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_tool0_;
-    std::shared_ptr<moveit_visual_tools::MoveItVisualTools> moveit_visual_tools_;
-
-
+    std::shared_ptr<moveit_visual_tools::MoveItVisumalTools> moveit_visual_tools_;
+mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
     void movementCallback(const std_msgs::msg::String::SharedPtr msg) {
         RCLCPP_INFO(this->get_logger(), "Received movement command: %s", msg->data.c_str());
         std::stringstream ss;
@@ -227,20 +227,60 @@ private:
         return false;
     }
 
-    void moveToTool() {
-        RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
-        publishArmStatus("moving to tool");
-        auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
-        std::stringstream ss;
-        ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z;
-        publishArmStatus(ss.str());
+    // void moveToTool() {
+    //     RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
+    //     publishArmStatus("moving to tool");
+    //     auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
+    //     std::stringstream ss;
+    //     ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z;
+    //     publishArmStatus(ss.str());
 
-        geometry_msgs::msg::Pose target_pose;
-        target_pose.position.x = current_pose.position.x;
-        target_pose.position.y = current_pose.position.y;
-        target_pose.position.z = current_pose.position.z - 0.1;
-        target_pose.orientation = DEFAULT_ORIENTATION;
-        moveToPose(target_pose, "line");
+    //     geometry_msgs::msg::Pose target_pose;
+    //     target_pose.position.x = current_pose.position.x;
+    //     target_pose.position.y = current_pose.position.y;
+    //     target_pose.position.z = current_pose.position.z - 0.1;
+    //     target_pose.orientation = DEFAULT_ORIENTATION;
+    //     moveToPose(target_pose, "line");
+    // }
+
+    void moveToTool() {
+        RCLCPP_INFO(this->get_logger(), "Jogging to tool position in a straight line.");
+        publishArmStatus("jogging to tool");
+
+        // Publisher for Cartesian velocity commands
+        auto jog_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_node/delta_twist_cmds", 10);
+
+        // Set up Twist message for downward motion
+        geometry_msgs::msg::TwistStamped jog_cmd;
+        jog_cmd.header.frame_id = "base_link";
+        jog_cmd.header.stamp = this->get_clock()->now();
+        jog_cmd.twist.linear.z = -0.05;  // Jogging downwards at 5 cm/sec
+        RCLCPP_INFO(this->get_logger(), "Publishing jog command with z velocity: %f", jog_cmd.twist.linear.z);
+
+        rclcpp::Rate rate(10);  // Jogging frequency in Hz
+        auto start_time = this->now();
+
+        // Define target depth and current depth
+        double target_depth = 0.1;  // Distance to move down in meters
+        double moved_distance = 0.0;
+
+        while (rclcpp::ok() && moved_distance < target_depth) {
+            // Publish jogging command
+            jog_cmd.header.stamp = this->now();
+            jog_pub->publish(jog_cmd);
+
+            // Simulate tracking movement (in a real system, calculate actual moved distance)
+            moved_distance += 0.05;  // Assuming 5 mm per iteration as an example
+
+            rate.sleep();
+        }
+
+        // Stop jogging by sending zero velocity
+        jog_cmd.twist.linear.z = 0.0;
+        jog_pub->publish(jog_cmd);
+
+        publishArmStatus("jogging complete");
+        publishArmDone("done");
     }
 
     void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType) {
