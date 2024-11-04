@@ -90,18 +90,18 @@ private:
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
 		publishBrainStatus("Waiting for movement to finish...");
 		
-		// // TODO: (Movement) Go to Birds-eye pose
-		// int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
+		// // (Movement) Go to Birds-eye pose
+		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
 		
 
-        // std::unique_lock<std::mutex> lock(movement_mutex_);
-        // movement_cv_.wait(lock, [this] { return movement_finished; });
+        std::unique_lock<std::mutex> lock(movement_mutex_);
+        movement_cv_.wait(lock, [this] { return movement_finished; });
 
-		// if (!birdseye_movement_success) {
-		// 	publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
-		// 	return failure; 
-		// }
-		// publishBrainStatus("Movement finished! Continuing...");
+		if (!birdseye_movement_success) {
+			publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
+			return failure; 
+		}
+		publishBrainStatus("Movement finished! Continuing...");
 
 		// Get screw centriods in image frame
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
@@ -142,8 +142,12 @@ private:
 				return failure; 
 			}
 
+
+// Transform: x= 0.265584, y=0.522151, z=0.932978
+			// Manually set z to 0.3
+			realPose.position.z = 0.3;
 			// (Movement) Move to (x y 0.3)
-			// status = callMovementModule(hole, realPose.position);
+			status = callMovementModule(hole, realPose.position);
 
 			if (!status) {
 				publishBrainStatus("ERROR: Move to 0.3 in z failed");

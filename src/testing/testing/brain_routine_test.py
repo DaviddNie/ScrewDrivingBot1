@@ -34,6 +34,7 @@ class BrainRoutineTest(Node):
 		self.brain_routine_cmd_cb_group = MutuallyExclusiveCallbackGroup()
 
 		self.ooi_sub = self.create_subscription(String, 'ooi_server_status', self.ooi_status_callback, 10)
+		self.arm_sub = self.create_subscription(String, 'arm_status', self.arm_status_callback, 10)
 
 		# Create subscriptions with callback groups
 		self.vision_status_sub = self.create_subscription(
@@ -92,6 +93,13 @@ class BrainRoutineTest(Node):
 			self.get_logger().info(f'Brain Status - {msg.data}')
 		except Exception as e:
 			self.get_logger().error(f'ERROR: Cannot read brain_status topic data - {e}')
+
+	def arm_status_callback(self, msg):
+		try:
+			self.get_logger().info(f'Arm Status - {msg.data}')
+		except Exception as e:
+			self.get_logger().error(f'ERROR: Cannot read brain_status topic data - {e}')
+
 
 	def command_callback(self, future: Future):
 		try:
