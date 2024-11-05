@@ -21,6 +21,7 @@
 - ~~brain_routine_test sometimes send two commands to brain~~  
   - ~~need to add `is_busy` support in brain~~
 ### Recent Updates
+- [Week 9 Tue][David] Move to screw fully working, change home position, change in arm-movement pkg, ignore large screws
 - [Week 9 Mon][David] Add `OOI` frame that indicates the screwhole, add transformation to real-coordinate support
 - [Week 8 Wed][David] Add support for converting to RealCoor with respect to base_link, bring back transformation pkg
 - [Week 8 Wed][David] Fix centroid locating algo

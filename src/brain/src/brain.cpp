@@ -136,6 +136,7 @@ private:
 				return failure; 
 			}
 
+			// Get relative position of "OOI" with resepct to "base_link"
 			geometry_msgs::msg::Pose realPose = getRealPoseFromTF();
 
 			if (checkInvalidPose(realPose)) {
@@ -143,17 +144,15 @@ private:
 				return failure; 
 			}
 
-			publishBrainStatus("Pose is valid");
-
-			// Manually set z to 0.3
+			// Manually set z to 0.025
 			realPose.position.z = 0.025;
 			realPose.position.x = realPose.position.x -0.061284;
 			realPose.position.y = realPose.position.y -0.049078;
 
-			publishBrainStatus("Transform: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
+			publishBrainStatus("Real Coor: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
 			
-			// (Movement) Move to (x y 0.3)
+			// (Movement) Move to (x y 0.025)
 			status = callMovementModule(hole, realPose.position);
 
 	        movement_cv_.wait(lock, [this] { return movement_finished; });
@@ -164,10 +163,8 @@ private:
 				return failure; 
 			}
 
+			// (Movement) Back to home
 			geometry_msgs::msg::Point point;
-			// geometry_msgs::msg::Pose pose = {0, 0 ,0};
-			// realPose.position.z = 0.3;
-			// status = callMovementModule(hole, realPose.position);
 			status = callMovementModule(home, point);
 
 	        movement_cv_.wait(lock, [this] { return movement_finished; });
@@ -177,14 +174,7 @@ private:
 				publishBrainStatus("ERROR: Move to 0.3 in z failed");
 				return failure; 
 			}
-			// TODO: (Vision) Fine-tune
-
-			// TODO: (Movement) Move to (new_x, new_y, 0.3)
-
-			// TODO: Check if displacement is more than 0.05, Re-tune if so
-
-			// TODO: (Movement) Go-down (assume known height)
-
+	
 			// Screwdriving
 			// callEndEffectorModule(turnLightOn);
 			// callEndEffectorModule(startScrewDiving);
@@ -263,15 +253,6 @@ private:
 		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 		request->point = point;
 		
-
-		// // Wait for the service to be available
-		// if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
-		// 	publishBrainStatus("End Effector service not available.");
-
-		// 	setMovementFinished();
-		// 	return 0;
-		// }
-
 		// Call the service
 		auto result_future = armClient_->async_send_request(request);
 		auto response = result_future.get();

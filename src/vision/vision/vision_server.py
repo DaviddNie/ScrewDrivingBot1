@@ -152,7 +152,7 @@ class VisionServer(Node):
 		# Filter by Area
 		params.filterByArea = True
 		params.minArea = 50
-		params.maxArea = 400
+		params.maxArea = 75
 
 		# Filter by Circularity
 		params.filterByCircularity = True
@@ -175,7 +175,7 @@ class VisionServer(Node):
 
 		# Filter by Area
 		params.filterByArea = True
-		params.minArea = 25
+		params.minArea = 50
 		params.maxArea = 200
 
 		# Filter by Circularity

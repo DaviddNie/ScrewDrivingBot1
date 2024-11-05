@@ -7,7 +7,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 
 # Toggle between simulated or real UR5e hardware
-use_fake = False
+use_fake = True
 use_fake_str = 'true'
 ur_type = 'ur5e'
 ip_address = 'yyy.yyy.yyy.yyy'
