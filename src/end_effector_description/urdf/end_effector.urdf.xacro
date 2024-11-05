@@ -28,7 +28,7 @@
       <parent link="${parent}"/>
       <child link="${prefix}base_link"/>
 
-      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
     </joint>
 
     <!-- Define a link for mesh base_link.STL. -->
@@ -76,7 +76,7 @@
     <joint name="${prefix}_camera_joint" type="fixed">
         <parent link="${prefix}base_link"/>
         <child link="camera_link"/>
-        <origin xyz="-0.02 0 0.07989" rpy="0 0 0"/>
+        <origin xyz="-0.02 0 0.07989" rpy="${pi} ${pi} 0"/>
     </joint>
 
     <link name="${prefix}_tool_point"> </link>

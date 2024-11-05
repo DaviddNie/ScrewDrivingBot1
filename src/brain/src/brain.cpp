@@ -47,13 +47,13 @@ public:
 			rmw_qos_profile_services_default, brain_cb_group_);
 
 	    visionClient_ = create_client<interfaces::srv::VisionCmd>
-			("vision_srv", rmw_qos_profile_services_default, end_effector_cb_group_);		
+			("vision_srv", rmw_qos_profile_services_default, vision_cb_group_);		
 
 		endEffectorClient_ = create_client<interfaces::srv::EndEffectorCmd>(
 			"end_effector_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
 
 		armClient_ = create_client<interfaces::srv::ArmCmd>(
-			"arm_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
+			"arm_srv", rmw_qos_profile_services_default, movement_cb_group_);
 
 		ooiServerClient_ = create_client<interfaces::srv::PublishOoiCmd>(
 			"ooi_srv", rmw_qos_profile_services_default, ooi_cb_group_);
@@ -90,18 +90,19 @@ private:
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
 		publishBrainStatus("Waiting for movement to finish...");
 		
-		// // TODO: (Movement) Go to Birds-eye pose
-		// int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
+		// (Movement) Go to Birds-eye pose
+		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
 		
 
-        // std::unique_lock<std::mutex> lock(movement_mutex_);
-        // movement_cv_.wait(lock, [this] { return movement_finished; });
+        std::unique_lock<std::mutex> lock(movement_mutex_);
+        movement_cv_.wait(lock, [this] { return movement_finished; });
+		movement_mutex_.unlock();
 
-		// if (!birdseye_movement_success) {
-		// 	publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
-		// 	return failure; 
-		// }
-		// publishBrainStatus("Movement finished! Continuing...");
+		if (!birdseye_movement_success) {
+			publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
+			return failure; 
+		}
+		publishBrainStatus("Movement finished! Continuing...");
 
 		// Get screw centriods in image frame
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
@@ -135,6 +136,7 @@ private:
 				return failure; 
 			}
 
+			// Get relative position of "OOI" with resepct to "base_link"
 			geometry_msgs::msg::Pose realPose = getRealPoseFromTF();
 
 			if (checkInvalidPose(realPose)) {
@@ -142,22 +144,37 @@ private:
 				return failure; 
 			}
 
-			// (Movement) Move to (x y 0.3)
-			// status = callMovementModule(hole, realPose.position);
+			// Manually set z to 0.025
+			realPose.position.z = 0.025;
+			realPose.position.x = realPose.position.x -0.061284;
+			realPose.position.y = realPose.position.y -0.049078;
+
+			publishBrainStatus("Real Coor: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
+				", z=" + std::to_string(realPose.position.z));
+			
+			// (Movement) Move to (x y 0.025)
+			status = callMovementModule(hole, realPose.position);
+
+	        movement_cv_.wait(lock, [this] { return movement_finished; });
+			movement_mutex_.unlock();
+
+			if (!status) {
+				publishBrainStatus("ERROR: Move to z failed");
+				return failure; 
+			}
+
+			// (Movement) Back to home
+			geometry_msgs::msg::Point point;
+			status = callMovementModule(home, point);
+
+	        movement_cv_.wait(lock, [this] { return movement_finished; });
+			movement_mutex_.unlock();
 
 			if (!status) {
 				publishBrainStatus("ERROR: Move to 0.3 in z failed");
 				return failure; 
 			}
-
-			// TODO: (Vision) Fine-tune
-
-			// TODO: (Movement) Move to (new_x, new_y, 0.3)
-
-			// TODO: Check if displacement is more than 0.05, Re-tune if so
-
-			// TODO: (Movement) Go-down (assume known height)
-
+	
 			// Screwdriving
 			// callEndEffectorModule(turnLightOn);
 			// callEndEffectorModule(startScrewDiving);
@@ -231,25 +248,18 @@ private:
 
 	int callMovementModule(const std::string &mode, const geometry_msgs::msg::Point point) {
 		setMovementProcessing();
+
 		auto request = std::make_shared<interfaces::srv::ArmCmd::Request>();
 		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 		request->point = point;
 		
-
-		// // Wait for the service to be available
-		// if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
-		// 	publishBrainStatus("End Effector service not available.");
-
-		// 	setMovementFinished();
-		// 	return 0;
-		// }
-
 		// Call the service
 		auto result_future = armClient_->async_send_request(request);
 		auto response = result_future.get();
-		setMovementFinished();
-		return response->success;
 
+		setMovementFinished();
+
+		return response->success;
 	}
 
 	// pause execution until movement is finished  
@@ -261,7 +271,7 @@ private:
 	void setMovementFinished() {
 		std::lock_guard<std::mutex> lock(movement_mutex_);
 		movement_finished = true;
-		movement_cv_.notify_one();
+		movement_cv_.notify_all();
 	}
 
 	int callEndEffectorModule(const std::string &command) {

@@ -43,7 +43,7 @@ def generate_launch_description():
 		# Declare launch arguments (optional)
 		DeclareLaunchArgument('use_sim_time', default_value='false', 
 							   description='Use simulation time if true'),
-		play_bag,
+		# play_bag,
 		brain_node,
 		vision,        
 	])

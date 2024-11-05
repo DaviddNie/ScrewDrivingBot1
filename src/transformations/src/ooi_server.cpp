@@ -91,7 +91,6 @@ class OOIServer : public rclcpp::Node
 				response->real_pose.position.y = y;
 				response->real_pose.position.z = z;
 
-				publishServerStatus("Transform: x= " + std::to_string(x) + ", y=" + std::to_string(y) + ", z=" + std::to_string(z));
 				publishServerStatus("TF Server: Processing complete!");
 			}
 			catch (const tf2::TransformException & ex)
@@ -153,17 +152,3 @@ int main(int argc, char **argv)
 	rclcpp::shutdown();
 	return 0;
 }
-
-// [INFO] [1730330669.029399428] [vision_test]: Vision Status - Point 1 is at pixel x = 147.41, y = 69.91
-// [INFO] [1730330669.030878990] [vision_test]: Vision Status - Point 2 is at pixel x = 173.82, y = 19.11
-// [INFO] [1730330669.032910818] [vision_test]: Vision Status - Point 3 is at pixel x = 115.90, y = 19.72
-
-// davidnie@davidnie-Inspiron-5488:~/4231/ScrewDrivingBot1$ ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.35, y: 0.52, z: 0.3}}"
-
-// davidnie@davidnie-Inspiron-5488:~/4231/ScrewDrivingBot1$ ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.32, y: 0.55, z: 0.1}}"
-// requester: making request: interfaces.srv.ArmCmd_Request(mode='hole', point=geometry_msgs.msg.Point(x=0.32, y=0.55, z=0.1))
-
-// response:
-// interfaces.srv.ArmCmd_Response(success=False)
-
-// ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'home', point: {x: 0.0, y: 0.0, z: 0.0}}"

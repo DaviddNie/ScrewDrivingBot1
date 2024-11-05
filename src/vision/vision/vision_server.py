@@ -137,7 +137,7 @@ class VisionServer(Node):
 			response.pose_array = self.process_birdseye()
 		elif (command == self.CALIBRATE_CMD):
 			self.publishVisionStatus("Begin processing Calibration")
-			response.pose_array = self.process_calibrate()
+			response.pose_array = self.process_fineTune()
 		else:
 			self.publishVisionStatus("VisionModule: Unknown Command")
 			response.pose_array = PoseArray()
@@ -146,23 +146,17 @@ class VisionServer(Node):
 
 		return response
 
-
-	def process_calibrate(self):
-		self.publishVisionStatus("to be completed")
-
-		self.publishVisionStatus("Birds-eye processing to be completed")
-
 	def setup_blob_detector_fineTune(self):
 		params = cv2.SimpleBlobDetector_Params()
 
 		# Filter by Area
 		params.filterByArea = True
 		params.minArea = 50
-		params.maxArea = 400
+		params.maxArea = 75
 
 		# Filter by Circularity
 		params.filterByCircularity = True
-		params.minCircularity = 0.6
+		params.minCircularity = 0.8
 
 		# Filter by Convexity
 		params.filterByConvexity = False
@@ -181,7 +175,7 @@ class VisionServer(Node):
 
 		# Filter by Area
 		params.filterByArea = True
-		params.minArea = 25
+		params.minArea = 50
 		params.maxArea = 200
 
 		# Filter by Circularity
