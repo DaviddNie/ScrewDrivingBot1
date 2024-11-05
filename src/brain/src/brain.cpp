@@ -147,12 +147,8 @@ private:
 
 			// Manually set z to 0.3
 			realPose.position.z = 0.025;
-			// realPose.position.x = realPose.position.x - 0.1;
-			// realPose.position.y = realPose.position.y - 0.15;
-			// realPose.position.x = realPose.position.x - 0.085;
-			// realPose.position.y = realPose.position.y - 0.072;
-			realPose.position.x = realPose.position.x -0.074;
-			realPose.position.y = realPose.position.y -0.048;
+			realPose.position.x = realPose.position.x -0.061284;
+			realPose.position.y = realPose.position.y -0.049078;
 
 			publishBrainStatus("Transform: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));

@@ -153,97 +153,19 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-// [INFO] [1730330669.029399428] [vision_test]: Vision Status - Point 1 is at pixel x = 147.41, y = 69.91
-// [INFO] [1730330669.030878990] [vision_test]: Vision Status - Point 2 is at pixel x = 173.82, y = 19.11
-// [INFO] [1730330669.032910818] [vision_test]: Vision Status - Point 3 is at pixel x = 115.90, y = 19.72
+// result
+// x: 0.357026, y: 0.498443, z: 0.025
 
-// davidnie@davidnie-Inspiron-5488:~/4231/ScrewDrivingBot1$ ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.35, y: 0.52, z: 0.3}}"
+// -0.074;
+// -0.048;
 
-// davidnie@davidnie-Inspiron-5488:~/4231/ScrewDrivingBot1$ ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.32, y: 0.55, z: 0.1}}"
-// requester: making request: interfaces.srv.ArmCmd_Request(mode='hole', point=geometry_msgs.msg.Point(x=0.32, y=0.55, z=0.1))
+// realx = 0.431026
+// realy = 0.546443
 
-// response:
-// interfaces.srv.ArmCmd_Response(success=False)
+// ground truth
+// x: 0.369742, y: 0.497365, z: 0.05
 
-// ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'home', point: {x: 0.0, y: 0.0, z: 0.0}}"
+// 0.061284
+// 0.049078
 
-// Transform: x= 0.445403, y=0.513971, z=0.022418
-
-// Ground Truth
-// ros2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.38, y: 0.3, z: 0.3}}"
-
-// Test after tuning
-
-//  Transform: x= 0.449440, y=0.513022, z=0.019677
-// x= 0.447579, y=0.513695, z=0.020506
-// Transform: x= 0.235417, y=0.579198, z=0.020389
-// x= 0.233571, y=0.580123, z=0.020485
-// x= 0.230881, y=0.578295, z=0.022316
-// x= 0.448046, y=0.483478, z=0.019652
-
-//  Transform: x= 0.248034, y=0.392805, z=0.020505
-// Transform: x= 0.248632, y=0.483991, z=0.020801
-// Transform: x= 0.450061, y=0.393995, z=0.019845
-
-// Transform: x= 0.322784, y=0.279542, z=0.004010
-
-// Transform: x= 0.323748, y=0.282129, z=0.000611
-// x= 0.317764, y=0.274401, z=0.002971
-
-// Transform: x= 0.602476, y=0.414721, z=0.020102
-
-// with pos x
-// Transform: x= 0.603776, y=0.454314, z=0.020353
-
-//ground truth
-// x: 0.5024, y: 0.2647, z: 0.4
-
-// with neg x
-// x= 0.601468, y=0.416548, z=0.021305
-
-// test2
-
-// Transform: x= 0.373479, y=0.526225, z=0.020193
-
-//ground truth
-// os2 service call /arm_srv interfaces/srv/ArmCmd "{mode: 'hole', point: {x: 0.27, y: 0.3762, z: 0.2}}"
-
-// x - 0.1
-// y - 0.15
-
-
-// brain test
-
-// x= 0.270318, y=0.376349, z=0.300000
-
-// x: 0.315736, y: 0.462781, z: 0.3
-
-/////////
-
-// x=0.3535, y=0.5427, z=0.02
-
-// Moving to hole position at x: 0.379765, y: 0.645694, z: 0.3
-
-// realx = 0.4397 
-// realy = 0.6156
-
-// to-screwhole
-// 0.08
-// 0.07
-
-// Moving to hole position at x: 0.345742, y: 0.474365, z: 0.025
-
-// new pose
-
-//  x: 0.357746, y: 0.451954, z: 0.025			
-// realPose.position.x = realPose.position.x - 0.085;
-// realPose.position.y = realPose.position.y - 0.072;
-
-
-// realx = 0.442746
-// realy = 0.546365
-
-// x=0.368742, y=0.498365, z=0.025
-
-//-0.074004
-//-0.048
+//  0.369767, y: 0.497341, z: 0.025
