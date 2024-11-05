@@ -18,7 +18,7 @@
 // Constants for Cartesian path toggle and tolerance values
 constexpr double PLANNING_TIME = 20.0;
 constexpr int PLANNING_ATTEMPTS = 15;
-constexpr double GOAL_TOLERANCE = 0.0005; // 0.5 mm, 0.0005 m
+constexpr double GOAL_TOLERANCE = 0.0001; // 0.5 mm, 0.0005 m
 
 // Structure for joint constraint configuration
 struct JointConstraintConfig {
@@ -108,7 +108,7 @@ private:
 
         planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 0.04, 1.0, 0.85, -0.30, 0.5, frame_id, "backWall"));
         planning_scene_interface.applyCollisionObject(generateCollisionObject(0.04, 1.2, 1.0, -0.30, 0.25, 0.5, frame_id, "sideWall"));
-        planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 2.4, 0.01, 0.85, 0.25, 0.01, frame_id, "table"));
+        planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 2.4, 0.01, 0.85, 0.25, 0.013, frame_id, "table"));
         planning_scene_interface.applyCollisionObject(generateCollisionObject(2.4, 2.4, 0.04, 0.85, 0.25, 1.2, frame_id, "ceiling"));
     }
 
@@ -184,9 +184,9 @@ private:
         RCLCPP_INFO(this->get_logger(), "Moving to home position.");
         publishArmStatus("moving to home");
         geometry_msgs::msg::Pose home_pose;
-        home_pose.position.x = 0.35;
-        home_pose.position.y = 0.35;
-        home_pose.position.z = 0.50;
+        home_pose.position.x = 0.4;
+        home_pose.position.y = 0.4;
+        home_pose.position.z = 0.30;
         home_pose.orientation = DEFAULT_ORIENTATION;
         moveToPose(home_pose, "joint");
     }

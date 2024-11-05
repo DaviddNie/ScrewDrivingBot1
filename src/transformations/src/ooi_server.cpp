@@ -218,14 +218,32 @@ int main(int argc, char **argv)
 
 // x: 0.315736, y: 0.462781, z: 0.3
 
+/////////
+
 // x=0.3535, y=0.5427, z=0.02
 
-// realPose.position.x = realPose.position.x - 0.1;
-// realPose.position.y = realPose.position.y - 0.15;
+// Moving to hole position at x: 0.379765, y: 0.645694, z: 0.3
 
-// realx = 0.415736
-// realy = 0.512781
+// realx = 0.4397 
+// realy = 0.6156
 
 // to-screwhole
-// -0.06
-// +0.03
+// 0.08
+// 0.07
+
+// Moving to hole position at x: 0.345742, y: 0.474365, z: 0.025
+
+// new pose
+
+//  x: 0.357746, y: 0.451954, z: 0.025			
+// realPose.position.x = realPose.position.x - 0.085;
+// realPose.position.y = realPose.position.y - 0.072;
+
+
+// realx = 0.442746
+// realy = 0.546365
+
+// x=0.368742, y=0.498365, z=0.025
+
+//-0.074004
+//-0.048

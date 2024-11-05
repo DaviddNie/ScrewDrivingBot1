@@ -146,28 +146,41 @@ private:
 			publishBrainStatus("Pose is valid");
 
 			// Manually set z to 0.3
-			realPose.position.z = 0.3;
+			realPose.position.z = 0.025;
 			// realPose.position.x = realPose.position.x - 0.1;
 			// realPose.position.y = realPose.position.y - 0.15;
-			realPose.position.x = realPose.position.x - 0.06;
-			realPose.position.y = realPose.position.y + 0.03;
-// -0.06
-// +0.03
+			// realPose.position.x = realPose.position.x - 0.085;
+			// realPose.position.y = realPose.position.y - 0.072;
+			realPose.position.x = realPose.position.x -0.074;
+			realPose.position.y = realPose.position.y -0.048;
+
 			publishBrainStatus("Transform: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
 			
 			// (Movement) Move to (x y 0.3)
 			status = callMovementModule(hole, realPose.position);
 
-			std::unique_lock<std::mutex> lock(movement_mutex_);
-			movement_cv_.wait_for(lock, std::chrono::seconds(5), [this] { return movement_finished; });
+	        movement_cv_.wait(lock, [this] { return movement_finished; });
+			movement_mutex_.unlock();
+
+			if (!status) {
+				publishBrainStatus("ERROR: Move to z failed");
+				return failure; 
+			}
+
+			geometry_msgs::msg::Point point;
+			// geometry_msgs::msg::Pose pose = {0, 0 ,0};
+			// realPose.position.z = 0.3;
+			// status = callMovementModule(hole, realPose.position);
+			status = callMovementModule(home, point);
+
+	        movement_cv_.wait(lock, [this] { return movement_finished; });
+			movement_mutex_.unlock();
 
 			if (!status) {
 				publishBrainStatus("ERROR: Move to 0.3 in z failed");
 				return failure; 
 			}
-
-			break;
 			// TODO: (Vision) Fine-tune
 
 			// TODO: (Movement) Move to (new_x, new_y, 0.3)
@@ -248,12 +261,7 @@ private:
 	}
 
 	int callMovementModule(const std::string &mode, const geometry_msgs::msg::Point point) {
-
-		publishBrainStatus("checkpoint1");
-
 		setMovementProcessing();
-
-		publishBrainStatus("checkpoint2");
 
 		auto request = std::make_shared<interfaces::srv::ArmCmd::Request>();
 		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
@@ -270,19 +278,11 @@ private:
 
 		// Call the service
 		auto result_future = armClient_->async_send_request(request);
-		
-		publishBrainStatus("checkpoint3");
-
 		auto response = result_future.get();
-
-		publishBrainStatus("checkpoint4");
 
 		setMovementFinished();
 
-		publishBrainStatus("checkpoint5");
-
 		return response->success;
-
 	}
 
 	// pause execution until movement is finished  
