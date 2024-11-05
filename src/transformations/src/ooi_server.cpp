@@ -215,3 +215,17 @@ int main(int argc, char **argv)
 // brain test
 
 // x= 0.270318, y=0.376349, z=0.300000
+
+// x: 0.315736, y: 0.462781, z: 0.3
+
+// x=0.3535, y=0.5427, z=0.02
+
+// realPose.position.x = realPose.position.x - 0.1;
+// realPose.position.y = realPose.position.y - 0.15;
+
+// realx = 0.415736
+// realy = 0.512781
+
+// to-screwhole
+// -0.06
+// +0.03

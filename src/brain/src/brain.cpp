@@ -47,13 +47,13 @@ public:
 			rmw_qos_profile_services_default, brain_cb_group_);
 
 	    visionClient_ = create_client<interfaces::srv::VisionCmd>
-			("vision_srv", rmw_qos_profile_services_default, end_effector_cb_group_);		
+			("vision_srv", rmw_qos_profile_services_default, vision_cb_group_);		
 
 		endEffectorClient_ = create_client<interfaces::srv::EndEffectorCmd>(
 			"end_effector_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
 
 		armClient_ = create_client<interfaces::srv::ArmCmd>(
-			"arm_srv", rmw_qos_profile_services_default, end_effector_cb_group_);
+			"arm_srv", rmw_qos_profile_services_default, movement_cb_group_);
 
 		ooiServerClient_ = create_client<interfaces::srv::PublishOoiCmd>(
 			"ooi_srv", rmw_qos_profile_services_default, ooi_cb_group_);
@@ -90,12 +90,13 @@ private:
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
 		publishBrainStatus("Waiting for movement to finish...");
 		
-		// // (Movement) Go to Birds-eye pose
+		// (Movement) Go to Birds-eye pose
 		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
 		
 
         std::unique_lock<std::mutex> lock(movement_mutex_);
         movement_cv_.wait(lock, [this] { return movement_finished; });
+		movement_mutex_.unlock();
 
 		if (!birdseye_movement_success) {
 			publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
@@ -146,14 +147,20 @@ private:
 
 			// Manually set z to 0.3
 			realPose.position.z = 0.3;
-			realPose.position.x = realPose.position.x - 0.1;
-			realPose.position.y = realPose.position.y - 0.15;
-
+			// realPose.position.x = realPose.position.x - 0.1;
+			// realPose.position.y = realPose.position.y - 0.15;
+			realPose.position.x = realPose.position.x - 0.06;
+			realPose.position.y = realPose.position.y + 0.03;
+// -0.06
+// +0.03
 			publishBrainStatus("Transform: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
 			
 			// (Movement) Move to (x y 0.3)
 			status = callMovementModule(hole, realPose.position);
+
+			std::unique_lock<std::mutex> lock(movement_mutex_);
+			movement_cv_.wait_for(lock, std::chrono::seconds(5), [this] { return movement_finished; });
 
 			if (!status) {
 				publishBrainStatus("ERROR: Move to 0.3 in z failed");
@@ -241,7 +248,13 @@ private:
 	}
 
 	int callMovementModule(const std::string &mode, const geometry_msgs::msg::Point point) {
+
+		publishBrainStatus("checkpoint1");
+
 		setMovementProcessing();
+
+		publishBrainStatus("checkpoint2");
+
 		auto request = std::make_shared<interfaces::srv::ArmCmd::Request>();
 		request->mode = mode;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 		request->point = point;
@@ -257,8 +270,17 @@ private:
 
 		// Call the service
 		auto result_future = armClient_->async_send_request(request);
+		
+		publishBrainStatus("checkpoint3");
+
 		auto response = result_future.get();
+
+		publishBrainStatus("checkpoint4");
+
 		setMovementFinished();
+
+		publishBrainStatus("checkpoint5");
+
 		return response->success;
 
 	}
@@ -272,7 +294,7 @@ private:
 	void setMovementFinished() {
 		std::lock_guard<std::mutex> lock(movement_mutex_);
 		movement_finished = true;
-		movement_cv_.notify_one();
+		movement_cv_.notify_all();
 	}
 
 	int callEndEffectorModule(const std::string &command) {
