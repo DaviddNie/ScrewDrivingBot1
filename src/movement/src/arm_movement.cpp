@@ -231,13 +231,9 @@ private:
 
     void moveToTool(const std::string& data) {
         RCLCPP_INFO(this->get_logger(), "Recieved tool request.");
-        std::stringstream ss;
-        ss << "Moving to position : " << data;
-        publishArmStatus(ss.str());
+
         double x, y, z;
         if (parseCoordinates(data, x, y, z)) {
-            
-
             RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
             publishArmStatus("moving to tool");
             auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
@@ -250,7 +246,7 @@ private:
             target_pose = current_pose;
             target_pose.position.z += z;
 
-            moveToPose(target_pose, "line");
+            moveToPose(target_pose, "cartesian");
         }
     }
 
@@ -294,6 +290,34 @@ private:
     //     publishArmDone("done");
     // }
 
+    bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose) {
+        std::vector<geometry_msgs::msg::Pose> waypoints;
+        waypoints.push_back(start_pose);  // Start from the current pose
+        waypoints.push_back(target_pose); // Move to the target pose
+
+        moveit_msgs::msg::RobotTrajectory trajectory;
+        const double fraction = move_group_interface_->computeCartesianPath(waypoints, 0.01, 0.0, trajectory); // eef_step = 0.01, jump_threshold = 0.0
+
+        if (fraction > 0.9) {  // Check if a sufficient fraction of the path was planned
+            RCLCPP_INFO(this->get_logger(), "Cartesian path computed successfully with %.2f%% of the path", fraction * 100.0);
+
+            // Execute the trajectory
+            moveit::planning_interface::MoveGroupInterface::Plan plan;
+            plan.trajectory_ = trajectory;
+            move_group_interface_->execute(plan);
+
+            publishArmStatus("cartesian movement done");
+            publishArmDone("done");
+            return true;
+        } else {
+            RCLCPP_WARN(this->get_logger(), "Cartesian path planning failed with only %.2f%% of the path", fraction * 100.0);
+            publishArmStatus("cartesian movement failed");
+            publishArmDone("fail");
+            return false;
+        }
+    }
+
+
     void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType) {
         move_group_interface_->clearPathConstraints();
 
@@ -303,36 +327,43 @@ private:
         moveit_visual_tools_->publishSphere(target_pose, rviz_visual_tools::GREEN, 0.05);
         moveit_visual_tools_->trigger();
 
-        moveit_msgs::msg::Constraints constraints;
-
-        if (constraintType == "joint") {
-            RCLCPP_INFO(this->get_logger(), "Using joint constraints.");
-            setupJointConstraints(constraints);  // Adds joint constraints
-        } else if (constraintType == "line") {
-            RCLCPP_INFO(this->get_logger(), "Using line constraint along Z-axis.");
-            setupLineConstraint(constraints, target_pose);  // Adds line constraint
+        if (constraintType == "cartesian") {
+            // Execute Cartesian path planning and execution
+            if (!executeCartesianPath(current_pose, target_pose)) {
+                RCLCPP_WARN(this->get_logger(), "Cartesian path execution failed.");
+            }
         } else {
-            RCLCPP_WARN(this->get_logger(), "Unknown constraint type. Using default joint constraints.");
-            setupJointConstraints(constraints);  // Default to joint constraints
-        }
+            moveit_msgs::msg::Constraints constraints;
 
-        move_group_interface_->setPoseTarget(target_pose);
-        move_group_interface_->setPathConstraints(constraints);
+            if (constraintType == "joint") {
+                RCLCPP_INFO(this->get_logger(), "Using joint constraints.");
+                setupJointConstraints(constraints);  // Adds joint constraints
+            } else if (constraintType == "line") {
+                RCLCPP_INFO(this->get_logger(), "Using line constraint along Z-axis.");
+                setupLineConstraint(constraints, target_pose);  // Adds line constraint
+            } else {
+                RCLCPP_WARN(this->get_logger(), "Unknown constraint type. Using default joint constraints.");
+                setupJointConstraints(constraints);  // Default to joint constraints
+            }
 
-        moveit::planning_interface::MoveGroupInterface::Plan plan;
-        bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
-        if (success) {
-            RCLCPP_INFO(this->get_logger(), "Executing move.");
-            publishArmStatus("executing now");
-            publishTargetMarker(target_pose);  // Show target marker
-            move_group_interface_->execute(plan);
-            // move_group_interface_->stop();
-            publishArmStatus("movement done");
-            publishArmDone("done");
-        } else {
-            RCLCPP_WARN(this->get_logger(), "Path planning failed.");
-            publishArmStatus("planninng failed, movement failed");
-            publishArmDone("fail");
+            move_group_interface_->setPoseTarget(target_pose);
+            move_group_interface_->setPathConstraints(constraints);
+
+            moveit::planning_interface::MoveGroupInterface::Plan plan;
+            bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
+            if (success) {
+                RCLCPP_INFO(this->get_logger(), "Executing move.");
+                publishArmStatus("executing now");
+                publishTargetMarker(target_pose);  // Show target marker
+                move_group_interface_->execute(plan);
+                // move_group_interface_->stop();
+                publishArmStatus("movement done");
+                publishArmDone("done");
+            } else {
+                RCLCPP_WARN(this->get_logger(), "Path planning failed.");
+                publishArmStatus("planninng failed, movement failed");
+                publishArmDone("fail");
+            }
         }
 
         move_group_interface_->clearPathConstraints();
