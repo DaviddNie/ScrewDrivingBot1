@@ -1,6 +1,6 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include "interfaces/srv/arm_cmd.hpp"   // Correct your service package
+#include "interfaces/srv/arm_cmd.hpp" 
 #include "std_msgs/msg/string.hpp"
 
 class ArmBrain : public rclcpp::Node
@@ -63,7 +63,9 @@ private:
                             std::to_string(request->point.y) + "," +
                             std::to_string(request->point.z);
         } else if (request->mode == "tool") {
-            move_msg.data = "tool";
+            move_msg.data = "tool," + std::to_string(request->point.x) + "," +
+                            std::to_string(request->point.y) + "," +
+                            std::to_string(request->point.z);
         } else {
             RCLCPP_WARN(this->get_logger(), "Unknown mode: %s", request->mode.c_str());
             response->success = false;

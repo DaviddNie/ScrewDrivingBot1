@@ -28,11 +28,11 @@ struct JointConstraintConfig {
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
     { "shoulder_pan_joint",  0,  M_PI / 2,  M_PI / 2 },
-    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2.5,  M_PI /2.5},
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2,  M_PI /2},
     // { "elbow_joint",          0,  M_PI,  M_PI },
     { "wrist_1_joint",           M_PI/2,      M_PI*4/5,      M_PI*4/5},
     { "wrist_2_joint",              0,  M_PI/1.5,  M_PI/1.5 },
-    { "wrist_3_joint",        M_PI / 2,  M_PI / 2,  M_PI / 2 }
+    { "wrist_3_joint",        M_PI / 2,  M_PI / 1.5,  M_PI / 1.5 }
 };
 
 // Default orientation for the end effector
@@ -96,7 +96,7 @@ private:
             moveToHome();
         } else if (msg->data.rfind("hole", 0) == 0) {
             moveToHole(msg->data);
-        } else if (msg->data == "tool") {
+        } else if (msg->data.rfind("tool", 0) == 0) {
             moveToTool(msg->data);
         }
     }
@@ -156,7 +156,7 @@ private:
 
         shape_msgs::msg::SolidPrimitive line;
         line.type = shape_msgs::msg::SolidPrimitive::BOX;
-        line.dimensions = { 0.001, 0.001, 1.0 };  // X,Y,Z
+        line.dimensions = { 0.1, 0.1, 1.0 };  // X,Y,Z
         line_constraint.constraint_region.primitives.emplace_back(line);
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
@@ -192,6 +192,9 @@ private:
     }
 
     void moveToHole(const std::string& data) {
+        std::stringstream ss;
+        ss << "Moving to hole position at x: " << data;
+        publishArmStatus(ss.str());
         double x, y, z;
         if (parseCoordinates(data, x, y, z)) {
             std::stringstream ss;
@@ -227,21 +230,25 @@ private:
     }
 
     void moveToTool(const std::string& data) {
+        RCLCPP_INFO(this->get_logger(), "Recieved tool request.");
+        std::stringstream ss;
+        ss << "Moving to position : " << data;
+        publishArmStatus(ss.str());
         double x, y, z;
         if (parseCoordinates(data, x, y, z)) {
+            
+
             RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
             publishArmStatus("moving to tool");
             auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
 
-            geometry_msgs::msg::Pose target_pose;
-            target_pose.position.x = current_pose.position.x;
-            target_pose.position.y = current_pose.position.y;
-            target_pose.position.z = current_pose.position.z + z;
-            target_pose.orientation = DEFAULT_ORIENTATION;
-
             std::stringstream ss;
-            ss << "Moving to hole position at x: " << target_pose.position.x << ", y: " << target_pose.position.y << ", z: " << target_pose.position.z;
+            ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z+z;
             publishArmStatus(ss.str());
+
+            geometry_msgs::msg::Pose target_pose;
+            target_pose = current_pose;
+            target_pose.position.z += z;
 
             moveToPose(target_pose, "line");
         }
