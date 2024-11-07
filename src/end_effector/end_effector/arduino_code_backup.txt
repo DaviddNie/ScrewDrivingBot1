@@ -37,52 +37,63 @@ void loop() {
 
 // Function to process commands
 void processCommand(String command) {
-  // Trim the command to remove extra spaces (just in case)
   command.trim();
 
-  // Check if the command is to control the motor or the light
-  if (command == "LIGHT ON") {
-    if (!lightOn) {  // Only turn on the light if it is currently off
+  // Split the command into parts separated by spaces
+  int spaceIndex = 0;
+  while ((spaceIndex = command.indexOf(' ')) != -1) {
+    String part = command.substring(0, spaceIndex);
+    handleCommandPart(part);  // Handle each part individually
+    command = command.substring(spaceIndex + 1);
+    command.trim();  // Remove leading spaces
+  }
+  
+  // Handle the last remaining part if any
+  if (command.length() > 0) {
+    handleCommandPart(command);
+  }
+}
+
+// Helper function to handle each part of the command
+void handleCommandPart(String part) {
+  if (part == "LIGHT_ON") {
+    if (!lightOn) {
       digitalWrite(lightPin, HIGH);  // Turn the light on
-      lightOn = true;  // Update the light state
+      lightOn = true;
       Serial.println("Light turned ON.");
     }
-  } else if (command == "LIGHT OFF") {
-    if (lightOn) {  // Only turn off the light if it is currently on
+  } else if (part == "LIGHT_OFF") {
+    if (lightOn) {
       digitalWrite(lightPin, LOW);  // Turn the light off
-      lightOn = false;  // Update the light state
+      lightOn = false;
       Serial.println("Light turned OFF.");
     }
-  } 
-  else {
-    // Try to interpret the command as a PWM value
-    int pwmValue = command.toInt();
-    
-    // Check if the command is a valid PWM value
-    if (command == String(pwmValue) && pwmValue != 0) {  // Ensure it's a valid number
-      // Control motor direction and speed based on pwmValue
-      if (pwmValue > 0) {  // Forward direction
+  } else {
+    int pwmValue = part.toInt();
+
+    // Check if the part is a valid PWM value
+    if (part == String(pwmValue) && pwmValue != 0) {
+      if (pwmValue > 0) {
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
-        analogWrite(ENA, pwmValue);  // Set motor speed for forward direction
+        analogWrite(ENA, pwmValue);
         Serial.print("Motor running forward at PWM value: ");
         Serial.println(pwmValue); 
-      } else if (pwmValue < 0) {  // Reverse direction
+      } else if (pwmValue < 0) {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, HIGH);
-        analogWrite(ENA, -pwmValue);  // Set motor speed for reverse direction (invert the value)
+        analogWrite(ENA, -pwmValue);
         Serial.print("Motor running in reverse at PWM value: ");
         Serial.println(-pwmValue);
       }
-    } else if (pwmValue == 0) {  // Stop the motor
+    } else if (pwmValue == 0) {
       digitalWrite(IN1, LOW);
       digitalWrite(IN2, LOW);
-      analogWrite(ENA, 0);  // Stop motor
+      analogWrite(ENA, 0);
       Serial.println("Motor stopped.");
     } else {
-      // If the command is invalid, print an error message
-      Serial.print("Invalid Command: ");
-      Serial.println(command);
+      Serial.print("Invalid Command Part: ");
+      Serial.println(part);
     }
   }
 }

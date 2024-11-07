@@ -44,7 +44,7 @@ class EndEffectorNode(Node):
             if not self.screwdriving_in_progress:
                 self.screwdriving_in_progress = True
                 self.in_hole = False  # Reset flag 
-                self.send_command_to_arduino("30")  # Start motor
+                self.send_command_to_arduino("30 ")  # Start motor
 
                 # Start a timer to simulate motor running for 5 seconds
                 self.stop_motor_timer = self.create_timer(5.0, self.stop_motor)
@@ -68,19 +68,20 @@ class EndEffectorNode(Node):
 
         # Light control commands
         elif command == "TURN_LIGHT_ON":
-            self.send_command_to_arduino("LIGHT ON")
+            self.send_command_to_arduino("LIGHT_ON ")
             response.success = True
             response.message = "Light turned on."
 
         elif command == "TURN_LIGHT_OFF":
-            self.send_command_to_arduino("LIGHT OFF")
+            self.send_command_to_arduino("LIGHT_OFF ")
             response.success = True
             response.message = "Light turned off."
 
         else:
             response.success = False
-            response.message = "Unknown command."
-            self.get_logger().info("Unknown command.")
+            response.message = "Unknown command: " + command
+            self.get_logger().info(f"Unknown command: {command}")
+
 
 
         self.last_command = command
@@ -131,10 +132,14 @@ class EndEffectorNode(Node):
             self.get_logger().debug("Motor already stopped.")
 
     def send_command_to_arduino(self, command):
-        self.get_logger().info(f"Command to Arduino: {command}")
-        msg = String()
-        msg.data = command
-        self.arduino_command_publisher.publish(msg)
+        try:
+            self.get_logger().info(f"Command to Arduino: {command}")
+            msg = String()
+            msg.data = command
+            self.arduino_command_publisher.publish(msg)
+        except Exception as e:
+            self.get_logger().info(f'ERROR: Could not send Arduino serial request - {e}')
+        
 
 
 def main(args=None):

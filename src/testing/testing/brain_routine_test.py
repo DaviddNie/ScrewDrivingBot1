@@ -18,7 +18,7 @@ class BrainRoutineTest(Node):
 	VISION_MODULE = "vision"
 	MOVEMENT_MODULE = "movement"
 	END_EFFECTOR_MODULE = "endEffector"
-	SCREWDRIVING_ROUTINE= "screwdriving"
+	SCREWDRIVING_ROUTINE= "screwdriving2"
 	
 	def __init__(self):
 		super().__init__('routine_test')
@@ -70,6 +70,7 @@ class BrainRoutineTest(Node):
 			command_request = BrainRoutineCmd.Request()
 			command_request.command = cmd
 
+			self.get_logger().info(f"Sending command request: {cmd}")
 			future = self.brain_routine_cmd_client.call_async(command_request)
 			future.add_done_callback(self.command_callback)
 		except Exception as e:

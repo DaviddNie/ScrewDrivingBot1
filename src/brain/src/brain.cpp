@@ -191,6 +191,7 @@ private:
 
 	std_msgs::msg::Int32 runNewScrewdrivingRoutine() {
 		publishBrainStatus("Waiting for movement to finish...");
+		callEndEffectorModule(turnLightOn);
 		
 		// (Movement) Go to Birds-eye pose
 		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
@@ -272,7 +273,6 @@ private:
 			downPose.position.y = 0.0;  // or your desired y value
 			downPose.position.z = -0.01;
 
-			callEndEffectorModule(turnLightOn);
 			callEndEffectorModule(startScrewDiving);
 			status = callMovementModule(tool, downPose.position);
 			
@@ -300,7 +300,7 @@ private:
 			movement_mutex_.unlock();
 
 			if (!status){
-				publishBrainStatus("ERROR: go up alittle failed");
+				publishBrainStatus("ERROR: go up a little failed");
 				return failure; 
 			}
 
@@ -309,21 +309,22 @@ private:
 			// (Movement) Back to home
 			geometry_msgs::msg::Point point;
 			status = callMovementModule(home, point);
+			callEndEffectorModule(turnLightOff);
 
 	        movement_cv_.wait(lock, [this] { return movement_finished; });
 			movement_mutex_.unlock();
 
 			if (!status) {
-				publishBrainStatus("ERROR: Move to 0.3 in z failed");
+				publishBrainStatus("ERROR: Move in z failed");
 				return failure; 
 			}
-	
-			// Screwdriving
-			// callEndEffectorModule(turnLightOn);
-			// callEndEffectorModule(startScrewDiving);
-			// callEndEffectorModule(turnLightOff);
 
 		}
+
+		// Screwdriving
+		// callEndEffectorModule(turnLightOn);
+		// callEndEffectorModule(startScrewDiving);
+		// callEndEffectorModule(turnLightOff);
 
 		publishBrainStatus("New Screwdriving Routine Complete");
 		return success;
@@ -495,7 +496,7 @@ private:
 
 	// Routine commands
 	std::string const screwdrivingRoutine = "screwdriving";
-	std::string const newScrewdrivingRoutine = " new screwdriving";
+	std::string const newScrewdrivingRoutine = "screwdriving2";
 
 	// vision commands
 	std::string const birdsEyeCmd = "birds_eye";
