@@ -193,10 +193,9 @@ private:
 		publishBrainStatus("Waiting for movement to finish...");
 		callEndEffectorModule(turnLightOn);
 		
-		// (Movement) Go to Birds-eye pose
+		// ---- (Movement) Go to Birds-eye pose ----
 		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
 		
-
         std::unique_lock<std::mutex> lock(movement_mutex_);
         movement_cv_.wait(lock, [this] { return movement_finished; });
 		movement_mutex_.unlock();
@@ -206,12 +205,13 @@ private:
 			return failure; 
 		}
 		publishBrainStatus("Movement finished! Continuing...");
+		
 
-		// Get screw centriods in image frame
+		// ---- Get screw centriods in image frame ---- 
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
 
-		// Create a queue to store centroids
-		// Note that the pose are global in terms of the image coordinates, not with respect to base_link
+		// ---- Create a queue to store centroids ----
+			// Note that the pose are global in terms of the image coordinates, not with respect to base_link
 		std::queue<geometry_msgs::msg::Pose> centroidQueue;
 		for (const auto& pose : output.poses) {
 			centroidQueue.push(pose);
@@ -221,7 +221,7 @@ private:
 			publishBrainStatus("ERROR: Queue is empty!!!");
 		}
 
-		// Process each centroid in the queue
+		// ---- Process each centroid in the queue ----
 		while (!centroidQueue.empty()) {
 			geometry_msgs::msg::Pose currentCentroid = centroidQueue.front();
 			centroidQueue.pop();
@@ -231,7 +231,7 @@ private:
 
 			publishBrainStatus("Processing (" + std::to_string(x) + "," + std::to_string(y) + ")");
 
-			// (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link)
+			// ---- (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link) ----
 			bool status = callOOIModule(currentCentroid);
 
 			if (!status) {
@@ -247,15 +247,14 @@ private:
 				return failure; 
 			}
 
-			// Manually set z to 0.025
-			realPose.position.z = 0.025;
+			// (Movement) Move to (x y z)
+			realPose.position.z = 0.025; 	
 			realPose.position.x = realPose.position.x -0.061284;
 			realPose.position.y = realPose.position.y -0.049078;
 
 			publishBrainStatus("Real Coor: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
-			
-			// (Movement) Move to (x y 0.025)
+	
 			status = callMovementModule(hole, realPose.position);
 
 	        movement_cv_.wait(lock, [this] { return movement_finished; });
@@ -266,32 +265,32 @@ private:
 				return failure; 
 			}
 
+			// (Movement) Move down for screwdriving action
+				// Set the position
 			geometry_msgs::msg::Pose downPose;
-
-			// Set the position
-			downPose.position.x = 0.0;  // or your desired x value
-			downPose.position.y = 0.0;  // or your desired y value
+			downPose.position.x = 0.0;  
+			downPose.position.y = 0.0; 
 			downPose.position.z = -0.01;
 
 			callEndEffectorModule(startScrewDiving);
 			status = callMovementModule(tool, downPose.position);
 			
-
 			movement_cv_.wait(lock, [this] { return movement_finished; });
 			movement_mutex_.unlock();
 
 			if (!status){
 				publishBrainStatus("ERROR: screwing failed");
+				callEndEffectorModule(turnLightOff);
 				return failure; 
 			}
 			callEndEffectorModule(turnLightOff);
 
+			// (Movement) Move up to return after screwdriving action
+				// Set the position
 			geometry_msgs::msg::Pose upPose;
-
-			// Set the position
-			upPose.position.x = 0.0;  // or your desired x value
-			upPose.position.y = 0.0;  // or your desired y value
-			upPose.position.z = -0.01;
+			upPose.position.x = 0.0;
+			upPose.position.y = 0.0;
+			upPose.position.z = 0.01;
 
 			
 			status=callMovementModule(tool, upPose.position);
