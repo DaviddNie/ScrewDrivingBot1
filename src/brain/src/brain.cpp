@@ -292,7 +292,7 @@ private:
 			upPose.position.y = 0.0;
 			upPose.position.z = 0.01;
 
-			
+
 			status=callMovementModule(tool, upPose.position);
 
 			movement_cv_.wait(lock, [this] { return movement_finished; });
@@ -302,8 +302,6 @@ private:
 				publishBrainStatus("ERROR: go up a little failed");
 				return failure; 
 			}
-
-
 
 			// (Movement) Back to home
 			geometry_msgs::msg::Point point;
@@ -317,14 +315,7 @@ private:
 				publishBrainStatus("ERROR: Move in z failed");
 				return failure; 
 			}
-
 		}
-
-		// Screwdriving
-		// callEndEffectorModule(turnLightOn);
-		// callEndEffectorModule(startScrewDiving);
-		// callEndEffectorModule(turnLightOff);
-
 		publishBrainStatus("New Screwdriving Routine Complete");
 		return success;
 	}

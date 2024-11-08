@@ -246,57 +246,20 @@ private:
             target_pose = current_pose;
             target_pose.position.z += z;
 
-            moveToPose(target_pose, "cartesian");
+            double speed = 0.01;
+            moveToPose(target_pose, "cartesian", speed);
         }
     }
 
-    // void moveToTool() {
-    //     RCLCPP_INFO(this->get_logger(), "Jogging to tool position in a straight line.");
-    //     publishArmStatus("jogging to tool");
-
-    //     // Publisher for Cartesian velocity commands
-    //     auto jog_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_node/delta_twist_cmds", 10);
-
-    //     // Set up Twist message for downward motion
-    //     geometry_msgs::msg::TwistStamped jog_cmd;
-    //     jog_cmd.header.frame_id = "base_link";
-    //     jog_cmd.header.stamp = this->get_clock()->now();
-    //     jog_cmd.twist.linear.z = -0.05;  // Jogging downwards at 5 cm/sec
-    //     RCLCPP_INFO(this->get_logger(), "Publishing jog command with z velocity: %f", jog_cmd.twist.linear.z);
-
-    //     rclcpp::Rate rate(10);  // Jogging frequency in Hz
-    //     auto start_time = this->now();
-
-    //     // Define target depth and current depth
-    //     double target_depth = 0.1;  // Distance to move down in meters
-    //     double moved_distance = 0.0;
-
-    //     while (rclcpp::ok() && moved_distance < target_depth) {
-    //         // Publish jogging command
-    //         jog_cmd.header.stamp = this->now();
-    //         jog_pub->publish(jog_cmd);
-
-    //         // Simulate tracking movement (in a real system, calculate actual moved distance)
-    //         moved_distance += 0.05;  // Assuming 5 mm per iteration as an example
-
-    //         rate.sleep();
-    //     }
-
-    //     // Stop jogging by sending zero velocity
-    //     jog_cmd.twist.linear.z = 0.0;
-    //     jog_pub->publish(jog_cmd);
-
-    //     publishArmStatus("jogging complete");
-    //     publishArmDone("done");
-    // }
-
     bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose) {
         std::vector<geometry_msgs::msg::Pose> waypoints;
-        waypoints.push_back(start_pose);  // Start from the current pose
-        waypoints.push_back(target_pose); // Move to the target pose
+        waypoints.push_back(start_pose);  // Start from current pose
+        waypoints.push_back(target_pose); // Move to target pose
 
         moveit_msgs::msg::RobotTrajectory trajectory;
-        const double fraction = move_group_interface_->computeCartesianPath(waypoints, 0.01, 0.0, trajectory); // eef_step = 0.01, jump_threshold = 0.0
+        double eef_step = 0.01; 
+        double jump_threshold = 0.0;
+        const double fraction = move_group_interface_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
         if (fraction > 0.9) {  // Check if a sufficient fraction of the path was planned
             RCLCPP_INFO(this->get_logger(), "Cartesian path computed successfully with %.2f%% of the path", fraction * 100.0);
@@ -318,8 +281,11 @@ private:
     }
 
 
-    void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType) {
+    void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType, double speed = 0.3) {
         move_group_interface_->clearPathConstraints();
+
+        move_group_interface_->setMaxVelocityScalingFactor(speed);
+        move_group_interface_->setMaxAccelerationScalingFactor(speed);
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
         moveit_visual_tools_->deleteAllMarkers();
