@@ -27,6 +27,15 @@ class EndEffectorNode(Node):
         self.in_hole = False  # Flag to detect when screw enters the hole
         self.last_command = None
 
+        # Speed control
+        self.current_speed = 20  # Start speed at 0
+        self.target_speed = 40  # Target speed
+        self.increment_time = 0.2  # Interval for speed increments (in seconds)
+        self.total_duration = 8.0  # Total time to reach target speed (in seconds)
+        self.speed_increment = (self.target_speed - self.current_speed) / (self.total_duration / self.increment_time)
+        self.increase_speed_timer = None
+        self.stop_motor_timer = None
+
     def handle_end_effector_command(self, request, response):
         command = request.command
     
@@ -44,10 +53,11 @@ class EndEffectorNode(Node):
             if not self.screwdriving_in_progress:
                 self.screwdriving_in_progress = True
                 self.in_hole = False  # Reset flag 
-                self.send_command_to_arduino("30 ")  # Start motor
 
                 # Start a timer to simulate motor running for 5 seconds
-                self.stop_motor_timer = self.create_timer(5.0, self.stop_motor)
+                self.current_speed = 0
+                self.increase_speed_timer = self.create_timer(self.increment_time, self.increase_speed)
+                
                 response.success = True
                 response.message = "Screwdriving process started."
             else:
@@ -91,7 +101,6 @@ class EndEffectorNode(Node):
     def pwm_callback(self, msg):
         self.current_pwm = msg.data
         if self.screwdriving_in_progress:
-            # Log PWM updates only when there are significant changes or milestones
             self.get_logger().debug(f"Received PWM: {self.current_pwm}")
             self.estimate_torque(self.current_pwm)
 
@@ -139,6 +148,19 @@ class EndEffectorNode(Node):
             self.arduino_command_publisher.publish(msg)
         except Exception as e:
             self.get_logger().info(f'ERROR: Could not send Arduino serial request - {e}')
+
+    def increase_speed(self):
+        if self.current_speed < self.target_speed:
+            # Increase speed and send command to Arduino
+            self.current_speed += self.speed_increment
+            self.send_command_to_arduino(f"{int(self.current_speed)} ")
+        else:
+            # Stop increasing speed once target speed is reached
+            if self.increase_speed_timer:
+                self.increase_speed_timer.cancel()
+
+            # Start a timer to stop the motor after 5 seconds
+            self.stop_motor_timer = self.create_timer(5.0, self.stop_motor)
         
 
 
