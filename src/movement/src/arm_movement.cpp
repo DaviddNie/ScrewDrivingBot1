@@ -28,11 +28,11 @@ struct JointConstraintConfig {
 // Joint constraints for each joint
 const std::vector<JointConstraintConfig> JOINT_CONSTRAINTS = {
     { "shoulder_pan_joint",  0,  M_PI / 2,  M_PI / 2 },
-    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2.5,  M_PI /2.5},
+    { "shoulder_lift_joint",  -M_PI / 2,  M_PI /2,  M_PI /2},
     // { "elbow_joint",          0,  M_PI,  M_PI },
     { "wrist_1_joint",           M_PI/2,      M_PI*4/5,      M_PI*4/5},
     { "wrist_2_joint",              0,  M_PI/1.5,  M_PI/1.5 },
-    { "wrist_3_joint",        M_PI / 2,  M_PI / 2,  M_PI / 2 }
+    { "wrist_3_joint",        M_PI / 2,  M_PI / 1.5,  M_PI / 1.5 }
 };
 
 // Default orientation for the end effector
@@ -96,7 +96,7 @@ private:
             moveToHome();
         } else if (msg->data.rfind("hole", 0) == 0) {
             moveToHole(msg->data);
-        } else if (msg->data == "tool") {
+        } else if (msg->data.rfind("tool", 0) == 0) {
             moveToTool(msg->data);
         }
     }
@@ -156,7 +156,7 @@ private:
 
         shape_msgs::msg::SolidPrimitive line;
         line.type = shape_msgs::msg::SolidPrimitive::BOX;
-        line.dimensions = { 0.001, 0.001, 1.0 };  // X,Y,Z
+        line.dimensions = { 0.1, 0.1, 1.0 };  // X,Y,Z
         line_constraint.constraint_region.primitives.emplace_back(line);
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
@@ -192,6 +192,9 @@ private:
     }
 
     void moveToHole(const std::string& data) {
+        std::stringstream ss;
+        ss << "Moving to hole position at x: " << data;
+        publishArmStatus(ss.str());
         double x, y, z;
         if (parseCoordinates(data, x, y, z)) {
             std::stringstream ss;
@@ -227,68 +230,62 @@ private:
     }
 
     void moveToTool(const std::string& data) {
+        RCLCPP_INFO(this->get_logger(), "Recieved tool request.");
+
         double x, y, z;
         if (parseCoordinates(data, x, y, z)) {
             RCLCPP_INFO(this->get_logger(), "Moving to tool position.");
             publishArmStatus("moving to tool");
             auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
 
-            geometry_msgs::msg::Pose target_pose;
-            target_pose.position.x = current_pose.position.x;
-            target_pose.position.y = current_pose.position.y;
-            target_pose.position.z = current_pose.position.z + z;
-            target_pose.orientation = DEFAULT_ORIENTATION;
-
             std::stringstream ss;
-            ss << "Moving to hole position at x: " << target_pose.position.x << ", y: " << target_pose.position.y << ", z: " << target_pose.position.z;
+            ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z+z;
             publishArmStatus(ss.str());
 
-            moveToPose(target_pose, "line");
+            geometry_msgs::msg::Pose target_pose;
+            target_pose = current_pose;
+            target_pose.position.z += z;
+
+            double speed = 0.01;
+            moveToPose(target_pose, "cartesian", speed);
         }
     }
 
-    // void moveToTool() {
-    //     RCLCPP_INFO(this->get_logger(), "Jogging to tool position in a straight line.");
-    //     publishArmStatus("jogging to tool");
+    bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose) {
+        std::vector<geometry_msgs::msg::Pose> waypoints;
+        waypoints.push_back(start_pose);  // Start from current pose
+        waypoints.push_back(target_pose); // Move to target pose
 
-    //     // Publisher for Cartesian velocity commands
-    //     auto jog_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_node/delta_twist_cmds", 10);
+        moveit_msgs::msg::RobotTrajectory trajectory;
+        double eef_step = 0.01; 
+        double jump_threshold = 0.0;
+        const double fraction = move_group_interface_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-    //     // Set up Twist message for downward motion
-    //     geometry_msgs::msg::TwistStamped jog_cmd;
-    //     jog_cmd.header.frame_id = "base_link";
-    //     jog_cmd.header.stamp = this->get_clock()->now();
-    //     jog_cmd.twist.linear.z = -0.05;  // Jogging downwards at 5 cm/sec
-    //     RCLCPP_INFO(this->get_logger(), "Publishing jog command with z velocity: %f", jog_cmd.twist.linear.z);
+        if (fraction > 0.9) {  // Check if a sufficient fraction of the path was planned
+            RCLCPP_INFO(this->get_logger(), "Cartesian path computed successfully with %.2f%% of the path", fraction * 100.0);
 
-    //     rclcpp::Rate rate(10);  // Jogging frequency in Hz
-    //     auto start_time = this->now();
+            // Execute the trajectory
+            moveit::planning_interface::MoveGroupInterface::Plan plan;
+            plan.trajectory_ = trajectory;
+            move_group_interface_->execute(plan);
 
-    //     // Define target depth and current depth
-    //     double target_depth = 0.1;  // Distance to move down in meters
-    //     double moved_distance = 0.0;
+            publishArmStatus("cartesian movement done");
+            publishArmDone("done");
+            return true;
+        } else {
+            RCLCPP_WARN(this->get_logger(), "Cartesian path planning failed with only %.2f%% of the path", fraction * 100.0);
+            publishArmStatus("cartesian movement failed");
+            publishArmDone("fail");
+            return false;
+        }
+    }
 
-    //     while (rclcpp::ok() && moved_distance < target_depth) {
-    //         // Publish jogging command
-    //         jog_cmd.header.stamp = this->now();
-    //         jog_pub->publish(jog_cmd);
 
-    //         // Simulate tracking movement (in a real system, calculate actual moved distance)
-    //         moved_distance += 0.05;  // Assuming 5 mm per iteration as an example
-
-    //         rate.sleep();
-    //     }
-
-    //     // Stop jogging by sending zero velocity
-    //     jog_cmd.twist.linear.z = 0.0;
-    //     jog_pub->publish(jog_cmd);
-
-    //     publishArmStatus("jogging complete");
-    //     publishArmDone("done");
-    // }
-
-    void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType) {
+    void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType, double speed = 0.3) {
         move_group_interface_->clearPathConstraints();
+
+        move_group_interface_->setMaxVelocityScalingFactor(speed);
+        move_group_interface_->setMaxAccelerationScalingFactor(speed);
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
         moveit_visual_tools_->deleteAllMarkers();
@@ -296,36 +293,43 @@ private:
         moveit_visual_tools_->publishSphere(target_pose, rviz_visual_tools::GREEN, 0.05);
         moveit_visual_tools_->trigger();
 
-        moveit_msgs::msg::Constraints constraints;
-
-        if (constraintType == "joint") {
-            RCLCPP_INFO(this->get_logger(), "Using joint constraints.");
-            setupJointConstraints(constraints);  // Adds joint constraints
-        } else if (constraintType == "line") {
-            RCLCPP_INFO(this->get_logger(), "Using line constraint along Z-axis.");
-            setupLineConstraint(constraints, target_pose);  // Adds line constraint
+        if (constraintType == "cartesian") {
+            // Execute Cartesian path planning and execution
+            if (!executeCartesianPath(current_pose, target_pose)) {
+                RCLCPP_WARN(this->get_logger(), "Cartesian path execution failed.");
+            }
         } else {
-            RCLCPP_WARN(this->get_logger(), "Unknown constraint type. Using default joint constraints.");
-            setupJointConstraints(constraints);  // Default to joint constraints
-        }
+            moveit_msgs::msg::Constraints constraints;
 
-        move_group_interface_->setPoseTarget(target_pose);
-        move_group_interface_->setPathConstraints(constraints);
+            if (constraintType == "joint") {
+                RCLCPP_INFO(this->get_logger(), "Using joint constraints.");
+                setupJointConstraints(constraints);  // Adds joint constraints
+            } else if (constraintType == "line") {
+                RCLCPP_INFO(this->get_logger(), "Using line constraint along Z-axis.");
+                setupLineConstraint(constraints, target_pose);  // Adds line constraint
+            } else {
+                RCLCPP_WARN(this->get_logger(), "Unknown constraint type. Using default joint constraints.");
+                setupJointConstraints(constraints);  // Default to joint constraints
+            }
 
-        moveit::planning_interface::MoveGroupInterface::Plan plan;
-        bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
-        if (success) {
-            RCLCPP_INFO(this->get_logger(), "Executing move.");
-            publishArmStatus("executing now");
-            publishTargetMarker(target_pose);  // Show target marker
-            move_group_interface_->execute(plan);
-            // move_group_interface_->stop();
-            publishArmStatus("movement done");
-            publishArmDone("done");
-        } else {
-            RCLCPP_WARN(this->get_logger(), "Path planning failed.");
-            publishArmStatus("planninng failed, movement failed");
-            publishArmDone("fail");
+            move_group_interface_->setPoseTarget(target_pose);
+            move_group_interface_->setPathConstraints(constraints);
+
+            moveit::planning_interface::MoveGroupInterface::Plan plan;
+            bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
+            if (success) {
+                RCLCPP_INFO(this->get_logger(), "Executing move.");
+                publishArmStatus("executing now");
+                publishTargetMarker(target_pose);  // Show target marker
+                move_group_interface_->execute(plan);
+                // move_group_interface_->stop();
+                publishArmStatus("movement done");
+                publishArmDone("done");
+            } else {
+                RCLCPP_WARN(this->get_logger(), "Path planning failed.");
+                publishArmStatus("planninng failed, movement failed");
+                publishArmDone("fail");
+            }
         }
 
         move_group_interface_->clearPathConstraints();
