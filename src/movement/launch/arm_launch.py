@@ -73,8 +73,6 @@ def get_robot_description_semantic():
             PathJoinSubstitution([FindPackageShare("ur_moveit_config"), "srdf", "ur.srdf.xacro"]),
             " ",
             "name:=",
-            # Also ur_type parameter could be used but then the planning group names in yaml
-            # configs has to be updated!
             "ur",
             " ",
             "prefix:=",
