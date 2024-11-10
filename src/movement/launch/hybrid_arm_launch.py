@@ -113,6 +113,9 @@ def get_hybrid_planning_container(robot_description, robot_description_semantic)
     hybrid_planning_manager_param = load_yaml(
         "moveit_hybrid_planning", "config/hybrid_planning_manager.yaml"
     )
+    kinematics_yaml = PathJoinSubstitution(
+        [FindPackageShare("ur_description"), "config", "ur5e", "default_kinematics.yaml"]
+    )
 
     ompl_planning_pipeline_config = {
         "ompl": {
@@ -138,6 +141,7 @@ def get_hybrid_planning_container(robot_description, robot_description_semantic)
                     robot_description,
                     robot_description_semantic,
                     ompl_planning_pipeline_config,
+                    kinematics_yaml
                 ],
             ),
             ComposableNode(
@@ -149,6 +153,7 @@ def get_hybrid_planning_container(robot_description, robot_description_semantic)
                     local_planner_param,
                     robot_description,
                     robot_description_semantic,
+                    kinematics_yaml
                 ],
             ),
             ComposableNode(

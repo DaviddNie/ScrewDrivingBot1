@@ -76,6 +76,8 @@ public:
   {
     node_ = node;
 
+    node_->declare_parameter<std::string>("hybrid_planning_action_name", "/test/hybrid_planning/run_hybrid_planning");
+
     std::string hybrid_planning_action_name = "";
     if (node_->has_parameter("hybrid_planning_action_name"))
     {
@@ -194,7 +196,7 @@ public:
 
     // Setup motion planning goal taken from motion_planning_api tutorial
     const std::string planning_group = "ur_manipulator";
-    robot_model_loader::RobotModelLoader robot_model_loader(node_, "robot_description");
+    // robot_model_loader::RobotModelLoader robot_model_loader(node_, "robot_description");
     const moveit::core::RobotModelPtr& robot_model = robot_model_loader.getModel();
 
     // Create a RobotState and JointModelGroup
