@@ -89,13 +89,13 @@ public:
     hp_action_client_ =
         rclcpp_action::create_client<moveit_msgs::action::HybridPlanner>(node_, hybrid_planning_action_name);
 
-    collision_object_1_.header.frame_id = "panda_link0";
+    collision_object_1_.header.frame_id = "tool0";
     collision_object_1_.id = "box1";
 
-    collision_object_2_.header.frame_id = "panda_link0";
+    collision_object_2_.header.frame_id = "tool0";
     collision_object_2_.id = "box2";
 
-    collision_object_3_.header.frame_id = "panda_link0";
+    collision_object_3_.header.frame_id = "tool0";
     collision_object_3_.id = "box3";
 
     box_1_.type = box_1_.BOX;
@@ -193,7 +193,7 @@ public:
     rclcpp::sleep_for(2s);
 
     // Setup motion planning goal taken from motion_planning_api tutorial
-    const std::string planning_group = "panda_arm";
+    const std::string planning_group = "ur_manipulator";
     robot_model_loader::RobotModelLoader robot_model_loader(node_, "robot_description");
     const moveit::core::RobotModelPtr& robot_model = robot_model_loader.getModel();
 

@@ -66,6 +66,10 @@ private:
             move_msg.data = "tool," + std::to_string(request->point.x) + "," +
                             std::to_string(request->point.y) + "," +
                             std::to_string(request->point.z);
+        } else if (request->mode == "exe") {
+            move_msg.data = "exe," + std::to_string(request->point.x) + "," +
+                            std::to_string(request->point.y) + "," +
+                            std::to_string(request->point.z); 
         } else {
             RCLCPP_WARN(this->get_logger(), "Unknown mode: %s", request->mode.c_str());
             response->success = false;
