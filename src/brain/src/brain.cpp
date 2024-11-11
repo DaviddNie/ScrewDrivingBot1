@@ -20,6 +20,8 @@
 #include <queue>
 #include <condition_variable>
 #include <mutex>
+#include <chrono>
+#include <thread>
 
 class Brain : public rclcpp::Node
 {
@@ -174,14 +176,9 @@ private:
 			movement_mutex_.unlock();
 
 			if (!status) {
-				publishBrainStatus("ERROR: Move to 0.3 in z failed");
+				publishBrainStatus("ERROR: Move in z failed");
 				return failure; 
 			}
-	
-			// Screwdriving
-			// callEndEffectorModule(turnLightOn);
-			// callEndEffectorModule(startScrewDiving);
-			// callEndEffectorModule(turnLightOff);
 
 		}
 
@@ -332,7 +329,12 @@ private:
 
 			// std::cout << "Add new screw & Press Enter to continue..." << std::endl;
         	// std::cin.get();
-		}
+
+			 // Wait for 5 seconds before continuing
+			RCLCPP_INFO(this->get_logger(), "Waiting for 5 seconds...");
+			std::this_thread::sleep_for(std::chrono::seconds(5));
+			publishBrainStatus("Continuing after 5-second wait.");
+			}
 		callEndEffectorModule(turnLightOff);
 		publishBrainStatus("New Screwdriving Routine Complete");
 		return success;
