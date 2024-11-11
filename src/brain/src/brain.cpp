@@ -327,6 +327,9 @@ private:
 				publishBrainStatus("ERROR: Move in z failed");
 				return failure; 
 			}
+
+			std::cout << "Add new screw & Press Enter to continue..." << std::endl;
+        	std::cin.get();
 		}
 		callEndEffectorModule(turnLightOff);
 		publishBrainStatus("New Screwdriving Routine Complete");

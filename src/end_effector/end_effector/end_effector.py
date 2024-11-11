@@ -166,8 +166,8 @@ class EndEffectorNode(Node):
             if self.increase_speed_timer:
                 self.increase_speed_timer.cancel()
 
-            # Start a timer to stop the motor after 5 seconds
-            self.stop_motor_timer = self.create_timer(5.0, self.stop_motor)
+            # Start a timer to stop the motor after 2 seconds
+            self.stop_motor_timer = self.create_timer(2, self.stop_motor)
 
 
 def main(args=None):
