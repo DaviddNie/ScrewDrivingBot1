@@ -37,7 +37,7 @@ def get_robot_description():
         [
             PathJoinSubstitution([FindExecutable(name="xacro")]),
             " ",
-            PathJoinSubstitution([FindPackageShare("ur_description"), "urdf", "ur.urdf.xacro"]),
+            PathJoinSubstitution([FindPackageShare("end_effector_description"), "urdf", "end_effector_withDriverSupport.xacro"]),
             " ",
             "robot_ip:=172.17.0.2",
             " ",
@@ -200,8 +200,19 @@ def generate_launch_description():
             common_hybrid_planning_param,
         ],
     )
+    demo_node = Node(
+        package="movement",
+        executable="hybrid_planning_demo_node",
+        name="hybrid_planning_demo_node",
+        output="screen",
+        parameters=[
+            robot_description,
+            robot_description_semantic,
+            common_hybrid_planning_param,
+        ],
+    )
 
    
     hybrid_planning_container = get_hybrid_planning_container(robot_description, robot_description_semantic)
 
-    return launch.LaunchDescription([hybrid_planning_container])
+    return launch.LaunchDescription([demo_node])

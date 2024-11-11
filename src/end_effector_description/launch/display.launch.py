@@ -1,10 +1,12 @@
 import os
+import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import TimerAction, IncludeLaunchDescription
 from launch.substitutions import PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 # Toggle between simulated or real UR5e hardware
 use_fake = True
@@ -81,10 +83,23 @@ def get_moveit_launch():
 
 
 def generate_launch_description():
+    end_effector_path = os.path.join(
+        get_package_share_directory('end_effector_description'), 'urdf', 'end_effector_withDriverSupport.xacro'
+    )
+    xacro_raw_description = xacro.process_file(end_effector_path).toxml()
+    robot_state_publisher = Node(
+        name='robot_state_publisher',
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description': xacro_raw_description}]
+    )
+
     """Main function to generate the complete launch description."""
     launch_description = [
         get_ur_control_launch(),
         get_moveit_launch(),
+        robot_state_publisher,
     ]
 
     # Only add camera launch if using real hardware
