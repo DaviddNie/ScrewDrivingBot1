@@ -19,7 +19,7 @@
 // Constants for Cartesian path toggle and tolerance values
 constexpr double PLANNING_TIME = 20.0;
 constexpr int PLANNING_ATTEMPTS = 15;
-constexpr double GOAL_TOLERANCE = 0.0001; // 0.1 mm, 0.0001 m
+constexpr double GOAL_TOLERANCE = 0.00005; // 0.1 mm, 0.0001 m
 
 // Structure for joint constraint configuration
 struct JointConstraintConfig {
