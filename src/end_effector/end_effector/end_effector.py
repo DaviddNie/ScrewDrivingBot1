@@ -1,4 +1,5 @@
 import rclpy
+import time
 from rclpy.node import Node
 from interfaces.srv import EndEffectorCmd
 from std_msgs.msg import Int32, String
@@ -57,12 +58,13 @@ class EndEffectorNode(Node):
 
                 # Start a timer to simulate motor running for 5 seconds
                 self.increase_speed_timer = self.create_timer(self.increment_time, self.increase_speed)
-                rate = self.create_rate(1)
-                rate.sleep()
+                time.sleep(0.01)
+                
                 response.success = True
                 response.message = "Screwdriving process started."
                 
             else:
+                self.get_logger().info(f"Screwdriving already in progress.")
                 response.success = False
                 response.message = "Screwdriving already in progress."
 
@@ -98,6 +100,7 @@ class EndEffectorNode(Node):
 
         self.last_command = command
 
+        time.sleep(2)
         return response
 
     def pwm_callback(self, msg):
@@ -135,6 +138,7 @@ class EndEffectorNode(Node):
             self.get_logger().info("Stopping motor.")
             self.send_command_to_arduino("0")
             self.screwdriving_in_progress = False
+            self.current_speed = 20
 
             # Cancel the timer
             if hasattr(self, 'stop_motor_timer'):
@@ -152,6 +156,7 @@ class EndEffectorNode(Node):
             self.get_logger().info(f'ERROR: Could not send Arduino serial request - {e}')
 
     def increase_speed(self):
+        self.get_logger().info(f"Screwdriver running at speed: {self.current_speed}")
         if self.current_speed < self.target_speed:
             # Increase speed and send command to Arduino
             self.current_speed += self.speed_increment

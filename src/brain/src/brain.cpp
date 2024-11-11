@@ -506,7 +506,7 @@ private:
 	std::string const clibrateCmd = "calibrate";
 
 	// end-effector commands
-	std::string const startScrewDriving = "START SCREWDRIVING";
+	std::string const startScrewDriving = "START_SCREWDRIVING";
 	std::string const getStatus = "GET_STATUS";
 	std::string const turnLightOn = "TURN_LIGHT_ON";
 	std::string const turnLightOff = "TURN_LIGHT_OFF";

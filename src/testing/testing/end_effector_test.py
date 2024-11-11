@@ -18,7 +18,8 @@ class BrainEndEffectorTest(Node):
             self.get_logger().info('Brain service not available, waiting...')
 
         # Command queue for multiple commands
-        self.command_queue = deque(["TURN_LIGHT_ON", "START_SCREWDRIVING", "TURN_LIGHT_OFF", "START_SCREWDRIVING"])
+        self.command_queue = deque(["TURN_LIGHT_ON", "START_SCREWDRIVING", "TURN_LIGHT_OFF", "GET_STATUS"])
+        # self.command_queue = deque(["START_SCREWDRIVING"])
         self.sending_command = False
         self.processing_complete = False  # Flag to signal when processing is complete
 
