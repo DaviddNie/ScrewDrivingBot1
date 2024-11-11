@@ -253,9 +253,11 @@ private:
 
 			double z_above_hole = 0.035; //m
 			realPose.position.z = z_above_hole;	
-			realPose.position.x = realPose.position.x - abs(0.446 - realPose.position.x);
-			//realPose.position.y = realPose.position.y -0.049078;
-			realPose.position.y = realPose.position.y - abs(0.485 - realPose.position.y);
+			realPose.position.x = realPose.position.x -0.063284;
+			// realPose.position.x = realPose.position.x - abs(0.446 - realPose.position.x);
+			// realPose.position.y = realPose.position.y -0.044078;
+			realPose.position.y = realPose.position.y -0.079678;
+			// realPose.position.y = realPose.position.y - abs(0.485 - realPose.position.y);
 
 			publishBrainStatus("Real Coor w/ offset: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
@@ -328,8 +330,8 @@ private:
 				return failure; 
 			}
 
-			std::cout << "Add new screw & Press Enter to continue..." << std::endl;
-        	std::cin.get();
+			// std::cout << "Add new screw & Press Enter to continue..." << std::endl;
+        	// std::cin.get();
 		}
 		callEndEffectorModule(turnLightOff);
 		publishBrainStatus("New Screwdriving Routine Complete");
