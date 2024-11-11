@@ -30,8 +30,8 @@ class EndEffectorNode(Node):
         # Speed control
         self.current_speed = 20  # Start speed at 0
         self.target_speed = 40  # Target speed
-        self.increment_time = 0.2  # Interval for speed increments (in seconds)
-        self.total_duration = 8.0  # Total time to reach target speed (in seconds)
+        self.total_duration = 0.5  # Total time to reach target speed (in seconds)
+        self.increment_time = self.total_duration / 5  # Interval for speed increments (in seconds)
         self.speed_increment = (self.target_speed - self.current_speed) / (self.total_duration / self.increment_time)
         self.increase_speed_timer = None
         self.stop_motor_timer = None
@@ -39,27 +39,29 @@ class EndEffectorNode(Node):
     def handle_end_effector_command(self, request, response):
         command = request.command
     
-        # Check for duplicate command
-        if self.last_command == command:
-            self.get_logger().debug(f"Duplicate command '{command}' not sent.")
-            response.success = False
-            response.message = f"Duplicate command '{command}' not executed."
-            return response
+        # # Check for duplicate command
+        # if self.last_command == command:
+        #     self.get_logger().debug(f"Duplicate command '{command}' not sent.")
+        #     response.success = False
+        #     response.message = f"Duplicate command '{command}' not executed."
+        #     return response
 
         self.get_logger().info(f"Command: {command}")
 
         # Handle START SCREWDRIVING command from the Brain
-        if command == "START SCREWDRIVING":
+        if command == "START_SCREWDRIVING":
+            self.get_logger().info(f"screwdriver in progress?: {self.screwdriving_in_progress}")
             if not self.screwdriving_in_progress:
                 self.screwdriving_in_progress = True
                 self.in_hole = False  # Reset flag 
 
                 # Start a timer to simulate motor running for 5 seconds
-                self.current_speed = 0
                 self.increase_speed_timer = self.create_timer(self.increment_time, self.increase_speed)
-                
+                rate = self.create_rate(1)
+                rate.sleep()
                 response.success = True
                 response.message = "Screwdriving process started."
+                
             else:
                 response.success = False
                 response.message = "Screwdriving already in progress."
@@ -153,7 +155,7 @@ class EndEffectorNode(Node):
         if self.current_speed < self.target_speed:
             # Increase speed and send command to Arduino
             self.current_speed += self.speed_increment
-            self.send_command_to_arduino(f"{int(self.current_speed)} ")
+            self.send_command_to_arduino(f"{int(self.current_speed) } ")
         else:
             # Stop increasing speed once target speed is reached
             if self.increase_speed_timer:
@@ -161,7 +163,6 @@ class EndEffectorNode(Node):
 
             # Start a timer to stop the motor after 5 seconds
             self.stop_motor_timer = self.create_timer(5.0, self.stop_motor)
-        
 
 
 def main(args=None):

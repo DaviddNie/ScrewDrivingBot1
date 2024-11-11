@@ -11,6 +11,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <moveit_msgs/msg/robot_trajectory.hpp>
 #include <vector>
 #include <sstream>
 #include <cmath>
@@ -18,7 +19,7 @@
 // Constants for Cartesian path toggle and tolerance values
 constexpr double PLANNING_TIME = 20.0;
 constexpr int PLANNING_ATTEMPTS = 15;
-constexpr double GOAL_TOLERANCE = 0.0001; // 0.5 mm, 0.0005 m
+constexpr double GOAL_TOLERANCE = 0.0001; // 0.1 mm, 0.0001 m
 
 // Structure for joint constraint configuration
 struct JointConstraintConfig {
@@ -204,7 +205,7 @@ private:
             // shift from tool0 to tool point
             geometry_msgs::msg::Pose target_pose;
             target_pose.position.x = x;
-            target_pose.position.y = y - 0.060059;
+            target_pose.position.y = y - 0.03013;
             target_pose.position.z = z + 0.097457;
             target_pose.orientation = DEFAULT_ORIENTATION;
             moveToPose(target_pose, "joint");
@@ -239,25 +240,25 @@ private:
             auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
 
             std::stringstream ss;
-            ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z+z;
+            ss << "Moving tool to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z+z;
             publishArmStatus(ss.str());
 
             geometry_msgs::msg::Pose target_pose;
             target_pose = current_pose;
             target_pose.position.z += z;
 
-            double speed = 0.01;
+            double speed = 0.001;
             moveToPose(target_pose, "cartesian", speed);
         }
     }
 
-    bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose) {
+    bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose, double speed) {
         std::vector<geometry_msgs::msg::Pose> waypoints;
         waypoints.push_back(start_pose);  // Start from current pose
         waypoints.push_back(target_pose); // Move to target pose
 
         moveit_msgs::msg::RobotTrajectory trajectory;
-        double eef_step = 0.01; 
+        double eef_step = 0.00001; 
         double jump_threshold = 0.0;
         const double fraction = move_group_interface_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
@@ -265,8 +266,16 @@ private:
             RCLCPP_INFO(this->get_logger(), "Cartesian path computed successfully with %.2f%% of the path", fraction * 100.0);
 
             // Execute the trajectory
+            // double target_duration = 10; //seconds
+            // adjustTrajectoryDuration(trajectory, target_duration);
+
             moveit::planning_interface::MoveGroupInterface::Plan plan;
             plan.trajectory_ = trajectory;
+
+            RCLCPP_INFO(this->get_logger(), "Set Max. Velocity: %.2f", speed);
+            move_group_interface_->setMaxVelocityScalingFactor(speed);
+            move_group_interface_->setMaxAccelerationScalingFactor(speed);
+
             move_group_interface_->execute(plan);
 
             publishArmStatus("cartesian movement done");
@@ -280,12 +289,24 @@ private:
         }
     }
 
+   
+    // void adjustTrajectoryDuration(moveit_msgs::msg::RobotTrajectory &trajectory, double target_duration) {
+    //     // Calculate the current duration of the trajectory in seconds
+    //     double current_duration = rclcpp::Duration(trajectory.joint_trajectory.points.back().time_from_start).seconds();
+    //     double scaling_factor = target_duration / current_duration;
+
+    //     // Scale time_from_start for each point in the trajectory
+    //     for (auto &point : trajectory.joint_trajectory.points) {
+    //         // Scale the duration in nanoseconds
+    //         int64_t scaled_nanoseconds = static_cast<int64_t>(rclcpp::Duration(point.time_from_start).nanoseconds() * scaling_factor);
+    //         point.time_from_start.sec = scaled_nanoseconds / 1000000000;
+    //         point.time_from_start.nanosec = scaled_nanoseconds % 1000000000;
+    //     }
+    // }
+
 
     void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType, double speed = 0.3) {
         move_group_interface_->clearPathConstraints();
-
-        move_group_interface_->setMaxVelocityScalingFactor(speed);
-        move_group_interface_->setMaxAccelerationScalingFactor(speed);
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
         moveit_visual_tools_->deleteAllMarkers();
@@ -295,7 +316,7 @@ private:
 
         if (constraintType == "cartesian") {
             // Execute Cartesian path planning and execution
-            if (!executeCartesianPath(current_pose, target_pose)) {
+            if (!executeCartesianPath(current_pose, target_pose, speed)) {
                 RCLCPP_WARN(this->get_logger(), "Cartesian path execution failed.");
             }
         } else {
@@ -314,6 +335,10 @@ private:
 
             move_group_interface_->setPoseTarget(target_pose);
             move_group_interface_->setPathConstraints(constraints);
+
+            RCLCPP_INFO(this->get_logger(), "Set Max. Velocity: %.2f", speed);
+            move_group_interface_->setMaxVelocityScalingFactor(speed);
+            move_group_interface_->setMaxAccelerationScalingFactor(speed);
 
             moveit::planning_interface::MoveGroupInterface::Plan plan;
             bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);

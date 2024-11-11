@@ -247,12 +247,17 @@ private:
 				return failure; 
 			}
 
-			// (Movement) Move to (x y z)
-			realPose.position.z = 0.025; 	
-			realPose.position.x = realPose.position.x -0.061284;
-			realPose.position.y = realPose.position.y -0.049078;
-
+			// (Movement) Move to (x y z) , 0.446, y: 0.485 x= 0.503901, y=0.559657
 			publishBrainStatus("Real Coor: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
+				", z=" + std::to_string(realPose.position.z));
+
+			double z_above_hole = 0.035; //m
+			realPose.position.z = z_above_hole;	
+			realPose.position.x = realPose.position.x - abs(0.446 - realPose.position.x);
+			//realPose.position.y = realPose.position.y -0.049078;
+			realPose.position.y = realPose.position.y - abs(0.485 - realPose.position.y);
+
+			publishBrainStatus("Real Coor w/ offset: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
 	
 			status = callMovementModule(hole, realPose.position);
@@ -267,30 +272,37 @@ private:
 
 			// (Movement) Move down for screwdriving action
 				// Set the position
+
+			double z_screw_in_hole = 0.023; //m , 0.022
+			double z_shift = z_above_hole - z_screw_in_hole; //m
 			geometry_msgs::msg::Pose downPose;
 			downPose.position.x = 0.0;  
 			downPose.position.y = 0.0; 
-			downPose.position.z = -0.01;
+			downPose.position.z = -z_shift;
 
-			callEndEffectorModule(startScrewDiving);
+			callEndEffectorModule(startScrewDriving);
+
+			// Start asynchronous screwdriver action
+        	// auto screwdriving_future = std::async(std::launch::async, &Brain::callEndEffectorModule, this, startScrewDriving);
+
 			status = callMovementModule(tool, downPose.position);
 			
 			movement_cv_.wait(lock, [this] { return movement_finished; });
 			movement_mutex_.unlock();
+			// screwdriving_future.wait();
 
 			if (!status){
 				publishBrainStatus("ERROR: screwing failed");
 				callEndEffectorModule(turnLightOff);
 				return failure; 
 			}
-			callEndEffectorModule(turnLightOff);
 
 			// (Movement) Move up to return after screwdriving action
 				// Set the position
 			geometry_msgs::msg::Pose upPose;
 			upPose.position.x = 0.0;
 			upPose.position.y = 0.0;
-			upPose.position.z = 0.01;
+			upPose.position.z = z_shift;
 
 
 			status=callMovementModule(tool, upPose.position);
@@ -316,6 +328,7 @@ private:
 				return failure; 
 			}
 		}
+		callEndEffectorModule(turnLightOff);
 		publishBrainStatus("New Screwdriving Routine Complete");
 		return success;
 	}
@@ -413,14 +426,14 @@ private:
 		request->command = command;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 
 		// Wait for the service to be available
-		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
+		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(2))) {
 			publishBrainStatus("End Effector service not available.");
 			return 0;
 		}
 
 		// Call the service
 		auto result_future = endEffectorClient_->async_send_request(request);
-		auto status = result_future.wait_for(std::chrono::seconds(2));
+		auto status = result_future.wait_for(std::chrono::seconds(3));
 
 		if (status == std::future_status::ready) {
 			auto response = result_future.get();
@@ -493,7 +506,7 @@ private:
 	std::string const clibrateCmd = "calibrate";
 
 	// end-effector commands
-	std::string const startScrewDiving = "START SCREWDRIVING";
+	std::string const startScrewDriving = "START SCREWDRIVING";
 	std::string const getStatus = "GET_STATUS";
 	std::string const turnLightOn = "TURN_LIGHT_ON";
 	std::string const turnLightOff = "TURN_LIGHT_OFF";
