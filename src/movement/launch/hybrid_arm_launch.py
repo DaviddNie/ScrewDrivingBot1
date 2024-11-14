@@ -37,7 +37,8 @@ def get_robot_description():
         [
             PathJoinSubstitution([FindExecutable(name="xacro")]),
             " ",
-            PathJoinSubstitution([FindPackageShare("end_effector_description"), "urdf", "end_effector_withDriverSupport.xacro"]),
+            # PathJoinSubstitution([FindPackageShare("end_effector_description"), "urdf", "end_effector_withDriverSupport.xacro"]),
+            PathJoinSubstitution([FindPackageShare("ur_description"), "urdf", "ur.urdf.xacro"]),
             " ",
             "robot_ip:=172.17.0.2",
             " ",
@@ -178,30 +179,30 @@ def generate_launch_description():
     # generate_common_hybrid_launch_description() returns a list of nodes to launch
     robot_description = get_robot_description()
     robot_description_semantic = get_robot_description_semantic()
-    arm_node = Node(
-        package="movement",
-        executable="arm_movement",
-        name="arm_movement",
-        output="screen",
-        parameters=[
-            robot_description,
-            robot_description_semantic,
-            common_hybrid_planning_param,
-            {"use_sim_time": True},
-        ],
-    )
-    arm_brain_node = Node(
-        package="movement",
-        executable="arm_brain",
-        name="arm_brain",
-        output="screen",
-        parameters=[
-            {"use_sim_time": True},
-            common_hybrid_planning_param,
-        ],
-    )
+    # arm_node = Node(
+    #     package="movement",
+    #     executable="arm_movement",
+    #     name="arm_movement",
+    #     output="screen",
+    #     parameters=[
+    #         robot_description,
+    #         robot_description_semantic,
+    #         common_hybrid_planning_param,
+    #         {"use_sim_time": True},
+    #     ],
+    # )
+    # arm_brain_node = Node(
+    #     package="movement",
+    #     executable="arm_brain",
+    #     name="arm_brain",
+    #     output="screen",
+    #     parameters=[
+    #         {"use_sim_time": True},
+    #         common_hybrid_planning_param,
+    #     ],
+    # )
     demo_node = Node(
-        package="movement",
+        package="moveit_hybrid_planning",
         executable="hybrid_planning_demo_node",
         name="hybrid_planning_demo_node",
         output="screen",
@@ -215,4 +216,4 @@ def generate_launch_description():
    
     hybrid_planning_container = get_hybrid_planning_container(robot_description, robot_description_semantic)
 
-    return launch.LaunchDescription([demo_node])
+    return launch.LaunchDescription([hybrid_planning_container, demo_node])

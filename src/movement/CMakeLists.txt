@@ -44,24 +44,9 @@ ament_target_dependencies(arm_movement rclcpp std_msgs moveit moveit_msgs moveit
 add_executable(arm_brain src/arm_brain.cpp)
 ament_target_dependencies(arm_brain rclcpp std_msgs interfaces)
 
-add_executable(hybrid_planning_demo_node src/hybrid_planning_demo_node.cpp)
-ament_target_dependencies(hybrid_planning_demo_node 
-  rclcpp 
-  std_msgs 
-  moveit_core 
-  moveit_msgs 
-  moveit_ros_planning 
-  moveit_ros_planning_interface 
-  moveit_visual_tools 
-  graph_msgs 
-  tf2_ros 
-  interfaces)
-target_link_libraries(hybrid_planning_demo_node ${LIBRARIES})
-
 install(TARGETS
 arm_movement
 arm_brain
-hybrid_planning_demo_node
 DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY

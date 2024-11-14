@@ -76,7 +76,7 @@ public:
   {
     node_ = node;
 
-    node_->declare_parameter<std::string>("hybrid_planning_action_name", "/test/hybrid_planning/run_hybrid_planning");
+    // node_->declare_parameter<std::string>("hybrid_planning_action_name", "/test/hybrid_planning/run_hybrid_planning");
 
     std::string hybrid_planning_action_name = "";
     if (node_->has_parameter("hybrid_planning_action_name"))
