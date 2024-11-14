@@ -1,14 +1,14 @@
 # SetPose.srv
-# float64 shoulder_pan_joint
-# float64 shoulder_lift_joint
-# float64 elbow_joint
-# float64 wrist_1_joint
-# float64 wrist_2_joint
-# float64 wrist_3_joint
+float64 shoulder_pan_joint
+float64 shoulder_lift_joint
+float64 elbow_joint
+float64 wrist_1_joint
+float64 wrist_2_joint
+float64 wrist_3_joint
 
-float64 x
-float64 y
-float64 z
+# float64 x
+# float64 y
+# float64 z
 
 ---
 bool success
