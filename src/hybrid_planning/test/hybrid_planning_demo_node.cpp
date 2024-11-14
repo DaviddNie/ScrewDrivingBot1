@@ -91,13 +91,13 @@ public:
     hp_action_client_ =
         rclcpp_action::create_client<moveit_msgs::action::HybridPlanner>(node_, hybrid_planning_action_name);
 
-    collision_object_1_.header.frame_id = "tool0";
+    collision_object_1_.header.frame_id = "base_link";
     collision_object_1_.id = "box1";
 
-    collision_object_2_.header.frame_id = "tool0";
+    collision_object_2_.header.frame_id = "base_link";
     collision_object_2_.id = "box2";
 
-    collision_object_3_.header.frame_id = "tool0";
+    collision_object_3_.header.frame_id = "base_link";
     collision_object_3_.id = "box3";
 
     box_1_.type = box_1_.BOX;
