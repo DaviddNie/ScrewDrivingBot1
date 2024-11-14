@@ -19,6 +19,8 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(trajectory_msgs REQUIRED)
+find_package(graph_msgs REQUIRED)
+find_package(interfaces REQUIRED)
 
 set(LIBRARIES
   # Components
@@ -46,6 +48,8 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   std_srvs
   tf2_ros
   trajectory_msgs
+  graph_msgs
+  interfaces
 )
 
 set(THIS_PACKAGE_INCLUDE_DIRS

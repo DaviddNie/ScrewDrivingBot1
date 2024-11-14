@@ -20,6 +20,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ArmCmd.srv"
   "srv/RealCoorCmd.srv"
   "srv/PublishOoiCmd.srv"
+  "srv/HybridCmd.srv"
   DEPENDENCIES geometry_msgs
 )
 ament_package()
