@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cmath>
 #include <thread>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <moveit/planning_interface/planning_interface.h>
@@ -123,7 +124,7 @@ private:
                            std::shared_ptr<interfaces::srv::HybridCmd::Response> response)
     { 
         RCLCPP_INFO(this->get_logger(), "Received movement request:");
-               
+     
         // Setup motion planning goal taken from motion_planning_api tutorial
         const std::string planning_group = "ur_manipulator";
         robot_model_loader::RobotModelLoader robot_model_loader(shared_from_this(), "robot_description");
@@ -142,9 +143,27 @@ private:
           locked_planning_scene->setCurrentState(*robot_state);
         }
 
+        // Define target pose from request data
+        geometry_msgs::msg::Pose target_pose;
+        target_pose.position.x = request->x;
+        target_pose.position.y = request->y;
+        target_pose.position.z = request->z;
+        // target_pose.orientation.w = 1.0; // Use this or request orientation as needed
+
+
+         // Perform IK to get joint positions
+        moveit::core::RobotState goal_state(robot_model);
+        bool found_ik = goal_state.setFromIK(joint_model_group, target_pose);
+
+        if (!found_ik)
+        {
+            RCLCPP_ERROR(this->get_logger(), "IK solution not found for target pose");
+            response->success = false;
+            return;
+        }
+
         // Create desired motion goal
         moveit_msgs::msg::MotionPlanRequest goal_motion_request;
-
         moveit::core::robotStateToRobotStateMsg(*robot_state, goal_motion_request.start_state);
         goal_motion_request.group_name = planning_group;
         goal_motion_request.num_planning_attempts = 10;
@@ -154,18 +173,18 @@ private:
         goal_motion_request.planner_id = "ompl";
         goal_motion_request.pipeline_id = "ompl";
 
-        moveit::core::RobotState goal_state(robot_model);
-        // Extract requested pose
-        std::vector<double> joint_values = {
-          request->shoulder_pan_joint,
-          request->shoulder_lift_joint,
-          request->elbow_joint,
-          request->wrist_1_joint,
-          request->wrist_2_joint,
-          request->wrist_3_joint,
-        };
-        goal_state.setJointGroupPositions(joint_model_group, joint_values);
-
+        // moveit::core::RobotState goal_state(robot_model);
+        // // Extract requested pose
+        // std::vector<double> joint_values = {
+        //   request->shoulder_pan_joint,
+        //   request->shoulder_lift_joint,
+        //   request->elbow_joint,
+        //   request->wrist_1_joint,
+        //   request->wrist_2_joint,
+        //   request->wrist_3_joint,
+        // };
+        // goal_state.setJointGroupPositions(joint_model_group, joint_values);
+        
         goal_motion_request.goal_constraints.resize(1);
         goal_motion_request.goal_constraints[0] =
             kinematic_constraints::constructGoalConstraints(goal_state, joint_model_group);

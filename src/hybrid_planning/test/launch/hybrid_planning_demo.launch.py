@@ -16,8 +16,8 @@ from hybrid_planning_common import (
 def generate_launch_description():
     # generate_common_hybrid_launch_description() returns a list of nodes to launch
     common_launch = generate_common_hybrid_launch_description()
-    robot_description = get_robot_description()
-    robot_description_semantic = get_robot_description_semantic()
+    # robot_description = get_robot_description()
+    # robot_description_semantic = get_robot_description_semantic()
 
     # Demo node
     common_hybrid_planning_param = load_yaml(

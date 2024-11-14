@@ -151,10 +151,13 @@ def generate_common_hybrid_launch_description():
         }
     }
     
-    # ompl_planning_yaml = load_yaml(
-    #     "moveit_resources_panda_moveit_config", "config/ompl_planning.yaml"
-    # )
-    # planning_pipelines_config["ompl"].update(ompl_planning_yaml)
+    ompl_planning_yaml = load_yaml(
+        "ur_moveit_config", "config/ompl_planning.yaml"
+    )
+    planning_pipelines_config["ompl"].update(ompl_planning_yaml)
+
+    kinematics_param = load_yaml(
+        "ur_moveit_config", "config/kinematics.yaml")
 
     moveit_controllers_yaml = load_yaml(
         "ur_moveit_config", "config/controllers.yaml")
@@ -196,6 +199,7 @@ def generate_common_hybrid_launch_description():
                     robot_description_semantic,
                     planning_pipelines_config,
                     moveit_controllers,
+                    kinematics_param
                 ],
             ),
             ComposableNode(
@@ -207,6 +211,7 @@ def generate_common_hybrid_launch_description():
                     local_planner_param,
                     robot_description,
                     robot_description_semantic,
+                    kinematics_param
                 ],
             ),
             ComposableNode(
@@ -216,6 +221,7 @@ def generate_common_hybrid_launch_description():
                 parameters=[
                     common_hybrid_planning_param,
                     hybrid_planning_manager_param,
+                    kinematics_param
                 ],
             ),
         ],
@@ -253,19 +259,6 @@ def generate_common_hybrid_launch_description():
         output="both",
         parameters=[robot_description],
     )
-
-    # # ros2_control using FakeSystem as hardware
-    # ros2_controllers_path = os.path.join(
-    #     get_package_share_directory("moveit_hybrid_planning"),
-    #     "config",
-    #     "demo_controller.yaml",
-    # )
-    # ros2_control_node = Node(
-    #     package="controller_manager",
-    #     executable="ros2_control_node",
-    #     parameters=[robot_description, ros2_controllers_path],
-    #     output="screen",
-    # )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
