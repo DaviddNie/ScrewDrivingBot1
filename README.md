@@ -21,19 +21,22 @@
 - ~~brain_routine_test sometimes send two commands to brain~~  
   - ~~need to add `is_busy` support in brain~~
 ### Recent Updates
-- [Week 10 Mon][Nicholas] Fine tuned brain routine to align with hole displacement and optimised screwdriving control routine.
-- [Week 9 Thu][Nicholas] Refined the movement package for precise cartesian control commands
-- [Week 9 Tue][David] Move to screw fully working, change home position, change in arm-movement pkg, ignore large screws
-- [Week 9 Mon][David] Add `OOI` frame that indicates the screwhole, add transformation to real-coordinate support
-- [Week 8 Wed][David] Add support for converting to RealCoor with respect to base_link, bring back transformation pkg
-- [Week 8 Wed][David] Fix centroid locating algorithm
-- [Week 8 Tue][Nicholas] Established movement package to control UR5e robot arm based on joint constraints
-- [Week 8 Tue][David] enable collosion check, add toolpoint_link and camera_link, deprecated transformation pkg
-- [Week 7 Sun][David] add dy_trans between camera_socket and camera, tune end_effector scale
-- [Week 7 Sun][David] end_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation
-- [Week 7 Sat][David] Add stub for Screwdriving Routine
-- [Week 7 Wed][David] Vision and Brain framework completed; testing package added
-- [Week 7 Wed][Nicholas]  Established arduino serial communication inside of ROS and mapped basic motor control functions inside End Effector package.
+- [Week 10 Mon][Nicholas, Jiawen] Fine tuned brain routine to align with hole displacement and optimised screwdriving control routine.
+- [Week 9 Thu][Nicholas, Jiawen] Refined the movement package for precise cartesian control commands.
+- [Week 9 Wed][Jiawen] Attempted the jogging command to improve precision of arm movement.
+- [Week 9 Tue][David] Move to screw fully working, change home position, change in arm-movement pkg, ignore large screws.
+- [Week 9 Mon][David] Add `OOI` frame that indicates the screwhole, add transformation to real-coordinate support.
+- [Week 8 Thu][Jiawen] Attempted Cartesian movement for the movement package but MoveIt unable to finish planning path.
+- [Week 8 Wed][David] Add support for converting to RealCoor with respect to base_link, bring back transformation pkg.
+- [Week 8 Wed][David] Fix centroid locating algorithm.
+- [Week 8 Tue][Nicholas, Jiawen] Attempted orientation constraint and established movement package to control UR5e robot arm based on joint constraints.
+- [Week 8 Tue][David] Enable collosion check, add toolpoint_link and camera_link, deprecated transformation pkg.
+- [Week 8 Mon][Jiawen] Created the base code for the movement package, including an arm brain and arm movement.
+- [Week 7 Sun][David] Add dy_trans between camera_socket and camera, tune end_effector scale.
+- [Week 7 Sun][David] End_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation.
+- [Week 7 Sat][David] Add stub for Screwdriving Routine.
+- [Week 7 Wed][David] Vision and Brain framework completed; testing package added.
+- [Week 7 Wed][Nicholas] Established arduino serial communication inside of ROS and mapped basic motor control functions inside End Effector package.
 - [Week 7 Tue][Nicholas] End Effector design complete and 3D printed.
 
 ### Push to main branch: CREATE PULL REQUEST!!!
