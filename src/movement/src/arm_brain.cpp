@@ -101,7 +101,6 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    // Use a multi-threaded executor to process callbacks concurrently
     rclcpp::executors::MultiThreadedExecutor executor;
     auto node = std::make_shared<ArmBrain>();
 

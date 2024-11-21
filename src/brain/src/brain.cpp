@@ -20,6 +20,8 @@
 #include <queue>
 #include <condition_variable>
 #include <mutex>
+#include <chrono>
+#include <thread>
 
 class Brain : public rclcpp::Node
 {
@@ -79,9 +81,6 @@ private:
 		if (command == screwdrivingRoutine) {
 			publishBrainStatus("Initiating Screwdriving Routine");
 			response->output = runScrewdrivingRoutine();	
-		} else if (command == newScrewdrivingRoutine) {
-			publishBrainStatus("Initiating New Screwdriving Routine");
-			response->output = runNewScrewdrivingRoutine();
 		} else {
 			// Unknown command
 			response->output = unknown;
@@ -91,105 +90,6 @@ private:
 	}
 
 	std_msgs::msg::Int32 runScrewdrivingRoutine() {
-		publishBrainStatus("Waiting for movement to finish...");
-		
-		// (Movement) Go to Birds-eye pose
-		int birdseye_movement_success = callMovementModule(home, geometry_msgs::msg::Point());
-		
-
-        std::unique_lock<std::mutex> lock(movement_mutex_);
-        movement_cv_.wait(lock, [this] { return movement_finished; });
-		movement_mutex_.unlock();
-
-		if (!birdseye_movement_success) {
-			publishBrainStatus("ERROR: Birdseye movement failed, terminating...");
-			return failure; 
-		}
-		publishBrainStatus("Movement finished! Continuing...");
-
-		// Get screw centriods in image frame
-		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
-
-		// Create a queue to store centroids
-		// Note that the pose are global in terms of the image coordinates, not with respect to base_link
-		std::queue<geometry_msgs::msg::Pose> centroidQueue;
-		for (const auto& pose : output.poses) {
-			centroidQueue.push(pose);
-		}
-
-		if (centroidQueue.empty()) {
-			publishBrainStatus("ERROR: Queue is empty!!!");
-		}
-
-		// Process each centroid in the queue
-		while (!centroidQueue.empty()) {
-			geometry_msgs::msg::Pose currentCentroid = centroidQueue.front();
-			centroidQueue.pop();
-
-			double x = currentCentroid.position.x;
-        	double y = currentCentroid.position.y;
-
-			publishBrainStatus("Processing (" + std::to_string(x) + "," + std::to_string(y) + ")");
-
-			// (Transformation) Set as "OOI" frame, convert to RealCoor (with respect to base_link)
-			bool status = callOOIModule(currentCentroid);
-
-			if (!status) {
-				publishBrainStatus("ERROR: OOI Module failed to establish `OOI` Frame");
-				return failure; 
-			}
-
-			// Get relative position of "OOI" with resepct to "base_link"
-			geometry_msgs::msg::Pose realPose = getRealPoseFromTF();
-
-			if (checkInvalidPose(realPose)) {
-				publishBrainStatus("ERROR: TF Transform from OOI to base_link is invalid");
-				return failure; 
-			}
-
-			// Manually set z to 0.025
-			realPose.position.z = 0.025;
-			realPose.position.x = realPose.position.x -0.061284;
-			realPose.position.y = realPose.position.y -0.049078;
-
-			publishBrainStatus("Real Coor: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
-				", z=" + std::to_string(realPose.position.z));
-			
-			// (Movement) Move to (x y 0.025)
-			status = callMovementModule(hole, realPose.position);
-
-	        movement_cv_.wait(lock, [this] { return movement_finished; });
-			movement_mutex_.unlock();
-
-			if (!status) {
-				publishBrainStatus("ERROR: Move to z failed");
-				return failure; 
-			}
-
-			// (Movement) Back to home
-			geometry_msgs::msg::Point point;
-			status = callMovementModule(home, point);
-
-	        movement_cv_.wait(lock, [this] { return movement_finished; });
-			movement_mutex_.unlock();
-
-			if (!status) {
-				publishBrainStatus("ERROR: Move to 0.3 in z failed");
-				return failure; 
-			}
-	
-			// Screwdriving
-			// callEndEffectorModule(turnLightOn);
-			// callEndEffectorModule(startScrewDiving);
-			// callEndEffectorModule(turnLightOff);
-
-		}
-
-		publishBrainStatus("Screwdriving Routine Complete");
-		return success;
-	}
-
-	std_msgs::msg::Int32 runNewScrewdrivingRoutine() {
 		publishBrainStatus("Waiting for movement to finish...");
 		callEndEffectorModule(turnLightOn);
 		
@@ -207,7 +107,7 @@ private:
 		publishBrainStatus("Movement finished! Continuing...");
 		
 
-		// ---- Get screw centriods in image frame ---- 
+		// ---- Get screw centroids in image frame ---- 
 		geometry_msgs::msg::PoseArray output = callVisionModule(birdsEyeCmd);
 
 		// ---- Create a queue to store centroids ----
@@ -247,12 +147,18 @@ private:
 				return failure; 
 			}
 
-			// (Movement) Move to (x y z)
-			realPose.position.z = 0.025; 	
-			realPose.position.x = realPose.position.x -0.061284;
-			realPose.position.y = realPose.position.y -0.049078;
-
+			// (Movement) Move to (x y z) in base_link frame
 			publishBrainStatus("Real Coor: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
+				", z=" + std::to_string(realPose.position.z));
+
+			// XY Offset to account for hole displacement
+			// Z Offset to account for screwdriving action
+			double z_above_hole = 0.035; //m
+			realPose.position.z = z_above_hole;	
+			realPose.position.x = realPose.position.x -0.063284;
+			realPose.position.y = realPose.position.y -0.079678;
+
+			publishBrainStatus("Real Coor w/ offset: x= " + std::to_string(realPose.position.x) + ", y=" + std::to_string(realPose.position.y) + 
 				", z=" + std::to_string(realPose.position.z));
 	
 			status = callMovementModule(hole, realPose.position);
@@ -265,14 +171,17 @@ private:
 				return failure; 
 			}
 
-			// (Movement) Move down for screwdriving action
-				// Set the position
+			// (Movement) Move down for screwdriving action; Set the position
+
+			double z_screw_in_hole = 0.023; //m , 0.022 is touching item.
+			double z_shift = z_above_hole - z_screw_in_hole; //m
 			geometry_msgs::msg::Pose downPose;
 			downPose.position.x = 0.0;  
 			downPose.position.y = 0.0; 
-			downPose.position.z = -0.01;
+			downPose.position.z = -z_shift;
 
-			callEndEffectorModule(startScrewDiving);
+			callEndEffectorModule(startScrewDriving);
+
 			status = callMovementModule(tool, downPose.position);
 			
 			movement_cv_.wait(lock, [this] { return movement_finished; });
@@ -283,14 +192,12 @@ private:
 				callEndEffectorModule(turnLightOff);
 				return failure; 
 			}
-			callEndEffectorModule(turnLightOff);
 
-			// (Movement) Move up to return after screwdriving action
-				// Set the position
+			// (Movement) Move up to return after screwdriving action; Set the position
 			geometry_msgs::msg::Pose upPose;
 			upPose.position.x = 0.0;
 			upPose.position.y = 0.0;
-			upPose.position.z = 0.01;
+			upPose.position.z = z_shift;
 
 
 			status=callMovementModule(tool, upPose.position);
@@ -315,8 +222,15 @@ private:
 				publishBrainStatus("ERROR: Move in z failed");
 				return failure; 
 			}
-		}
-		publishBrainStatus("New Screwdriving Routine Complete");
+
+			// Wait for 5 seconds before continuing
+			RCLCPP_INFO(this->get_logger(), "Waiting for 5 seconds...");
+			std::this_thread::sleep_for(std::chrono::seconds(5));
+			publishBrainStatus("Continuing after 5-second wait.");
+			}
+
+		callEndEffectorModule(turnLightOff);
+		publishBrainStatus("Screwdriving Routine Complete");
 		return success;
 	}
 
@@ -413,14 +327,14 @@ private:
 		request->command = command;  // Set the command (e.g., "START SCREWDRIVING" or "GET_STATUS" or "TURN_LIGHT_ON" or "TURN_LIGHT_OFF")
 
 		// Wait for the service to be available
-		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(1))) {
+		if (!endEffectorClient_->wait_for_service(std::chrono::seconds(2))) {
 			publishBrainStatus("End Effector service not available.");
 			return 0;
 		}
 
 		// Call the service
 		auto result_future = endEffectorClient_->async_send_request(request);
-		auto status = result_future.wait_for(std::chrono::seconds(2));
+		auto status = result_future.wait_for(std::chrono::seconds(3));
 
 		if (status == std::future_status::ready) {
 			auto response = result_future.get();
@@ -486,14 +400,13 @@ private:
 
 	// Routine commands
 	std::string const screwdrivingRoutine = "screwdriving";
-	std::string const newScrewdrivingRoutine = "screwdriving2";
 
 	// vision commands
 	std::string const birdsEyeCmd = "birds_eye";
 	std::string const clibrateCmd = "calibrate";
 
 	// end-effector commands
-	std::string const startScrewDiving = "START SCREWDRIVING";
+	std::string const startScrewDriving = "START_SCREWDRIVING";
 	std::string const getStatus = "GET_STATUS";
 	std::string const turnLightOn = "TURN_LIGHT_ON";
 	std::string const turnLightOff = "TURN_LIGHT_OFF";

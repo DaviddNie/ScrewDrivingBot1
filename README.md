@@ -21,15 +21,20 @@
 - ~~brain_routine_test sometimes send two commands to brain~~  
   - ~~need to add `is_busy` support in brain~~
 ### Recent Updates
+- [Week 10 Mon][Nicholas] Fine tuned brain routine to align with hole displacement and optimised screwdriving control routine.
+- [Week 9 Thu][Nicholas] Refined the movement package for precise cartesian control commands
 - [Week 9 Tue][David] Move to screw fully working, change home position, change in arm-movement pkg, ignore large screws
 - [Week 9 Mon][David] Add `OOI` frame that indicates the screwhole, add transformation to real-coordinate support
 - [Week 8 Wed][David] Add support for converting to RealCoor with respect to base_link, bring back transformation pkg
-- [Week 8 Wed][David] Fix centroid locating algo
+- [Week 8 Wed][David] Fix centroid locating algorithm
+- [Week 8 Tue][Nicholas] Established movement package to control UR5e robot arm based on joint constraints
 - [Week 8 Tue][David] enable collosion check, add toolpoint_link and camera_link, deprecated transformation pkg
 - [Week 7 Sun][David] add dy_trans between camera_socket and camera, tune end_effector scale
 - [Week 7 Sun][David] end_effector_description package complete, system_launch now launches with UR5e and camera and end_effector visualisation
 - [Week 7 Sat][David] Add stub for Screwdriving Routine
 - [Week 7 Wed][David] Vision and Brain framework completed; testing package added
+- [Week 7 Wed][Nicholas]  Established arduino serial communication inside of ROS and mapped basic motor control functions inside End Effector package.
+- [Week 7 Tue][Nicholas] End Effector design complete and 3D printed.
 
 ### Push to main branch: CREATE PULL REQUEST!!!
 - rebase first (so that the latest commits are on top) 

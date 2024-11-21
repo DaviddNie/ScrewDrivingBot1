@@ -18,15 +18,10 @@ class BrainRoutineTest(Node):
 	VISION_MODULE = "vision"
 	MOVEMENT_MODULE = "movement"
 	END_EFFECTOR_MODULE = "endEffector"
-	SCREWDRIVING_ROUTINE= "screwdriving2"
+	SCREWDRIVING_ROUTINE= "screwdriving"
 	
 	def __init__(self):
 		super().__init__('routine_test')
-
-		# self.vision_status_sub = self.create_subscription(String, 'vision_status', self.vision_status_callback, 10)
-		# self.brain_status_sub = self.create_subscription(String, 'brain_status', self.brain_status_callback, 10)
-
-		# self.brain_routine_cmd_client = self.create_client(BrainRoutineCmd, 'brain_routine_srv')
 
 		# Create mutually exclusive callback groups
 		self.vision_status_cb_group = MutuallyExclusiveCallbackGroup()
@@ -115,8 +110,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = BrainRoutineTest()
 
-    # Use MultiThreadedExecutor with multiple threads
-    executor = MultiThreadedExecutor(num_threads=4)  # Ensures parallel processing
+    executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)
 
     try:

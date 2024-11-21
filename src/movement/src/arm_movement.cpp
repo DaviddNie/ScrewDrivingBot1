@@ -11,6 +11,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <moveit_msgs/msg/robot_trajectory.hpp>
 #include <vector>
 #include <sstream>
 #include <cmath>
@@ -18,7 +19,7 @@
 // Constants for Cartesian path toggle and tolerance values
 constexpr double PLANNING_TIME = 20.0;
 constexpr int PLANNING_ATTEMPTS = 15;
-constexpr double GOAL_TOLERANCE = 0.0001; // 0.5 mm, 0.0005 m
+constexpr double GOAL_TOLERANCE = 0.00005; // 0.1 mm, 0.0001 m
 
 // Structure for joint constraint configuration
 struct JointConstraintConfig {
@@ -102,7 +103,6 @@ private:
     }
 
     void setupCollisionObjects() {
-        // std::string frame_id = move_group_interface_->getPlanningFrame();
         std::string frame_id = "world";
         moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
@@ -149,7 +149,7 @@ private:
     void setupLineConstraint(moveit_msgs::msg::Constraints& constraints, const geometry_msgs::msg::Pose& target_pose) {
         moveit_msgs::msg::PositionConstraint line_constraint;
         line_constraint.header.frame_id = "base_link";  // Reference frame for the constraint
-        line_constraint.link_name = move_group_interface_->getEndEffectorLink(); // "tool0";  // End effector link
+        line_constraint.link_name = move_group_interface_->getEndEffectorLink(); // "tool0"; End effector link for the ur5e
 
         RCLCPP_INFO(this->get_logger(), "Header frame: %s", line_constraint.header.frame_id.c_str());
         RCLCPP_INFO(this->get_logger(), "End effector link: %s", line_constraint.link_name.c_str());
@@ -204,7 +204,7 @@ private:
             // shift from tool0 to tool point
             geometry_msgs::msg::Pose target_pose;
             target_pose.position.x = x;
-            target_pose.position.y = y - 0.060059;
+            target_pose.position.y = y - 0.03013;
             target_pose.position.z = z + 0.097457;
             target_pose.orientation = DEFAULT_ORIENTATION;
             moveToPose(target_pose, "joint");
@@ -239,34 +239,38 @@ private:
             auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
 
             std::stringstream ss;
-            ss << "Moving to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z+z;
+            ss << "Moving tool to hole position at x: " << current_pose.position.x << ", y: " << current_pose.position.y << ", z: " << current_pose.position.z+z;
             publishArmStatus(ss.str());
 
             geometry_msgs::msg::Pose target_pose;
             target_pose = current_pose;
             target_pose.position.z += z;
 
-            double speed = 0.01;
+            double speed = 0.001;
             moveToPose(target_pose, "cartesian", speed);
         }
     }
 
-    bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose) {
+    bool executeCartesianPath(const geometry_msgs::msg::Pose &start_pose, const geometry_msgs::msg::Pose &target_pose, double speed) {
         std::vector<geometry_msgs::msg::Pose> waypoints;
         waypoints.push_back(start_pose);  // Start from current pose
         waypoints.push_back(target_pose); // Move to target pose
 
         moveit_msgs::msg::RobotTrajectory trajectory;
-        double eef_step = 0.01; 
+        double eef_step = 0.00001; 
         double jump_threshold = 0.0;
         const double fraction = move_group_interface_->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
         if (fraction > 0.9) {  // Check if a sufficient fraction of the path was planned
             RCLCPP_INFO(this->get_logger(), "Cartesian path computed successfully with %.2f%% of the path", fraction * 100.0);
 
-            // Execute the trajectory
             moveit::planning_interface::MoveGroupInterface::Plan plan;
             plan.trajectory_ = trajectory;
+
+            RCLCPP_INFO(this->get_logger(), "Set Max. Velocity: %.2f", speed);
+            move_group_interface_->setMaxVelocityScalingFactor(speed);
+            move_group_interface_->setMaxAccelerationScalingFactor(speed);
+
             move_group_interface_->execute(plan);
 
             publishArmStatus("cartesian movement done");
@@ -280,12 +284,8 @@ private:
         }
     }
 
-
     void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType, double speed = 0.3) {
         move_group_interface_->clearPathConstraints();
-
-        move_group_interface_->setMaxVelocityScalingFactor(speed);
-        move_group_interface_->setMaxAccelerationScalingFactor(speed);
 
         auto current_pose = move_group_interface_->getCurrentPose("tool0").pose;
         moveit_visual_tools_->deleteAllMarkers();
@@ -295,7 +295,7 @@ private:
 
         if (constraintType == "cartesian") {
             // Execute Cartesian path planning and execution
-            if (!executeCartesianPath(current_pose, target_pose)) {
+            if (!executeCartesianPath(current_pose, target_pose, speed)) {
                 RCLCPP_WARN(this->get_logger(), "Cartesian path execution failed.");
             }
         } else {
@@ -314,6 +314,10 @@ private:
 
             move_group_interface_->setPoseTarget(target_pose);
             move_group_interface_->setPathConstraints(constraints);
+
+            RCLCPP_INFO(this->get_logger(), "Set Max. Velocity: %.2f", speed);
+            move_group_interface_->setMaxVelocityScalingFactor(speed);
+            move_group_interface_->setMaxAccelerationScalingFactor(speed);
 
             moveit::planning_interface::MoveGroupInterface::Plan plan;
             bool success = (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
@@ -334,17 +338,6 @@ private:
 
         move_group_interface_->clearPathConstraints();
     }
-
-    // Creates a pose at a given positional offset from the current pose
-    // https://moveit.picknik.ai/humble/doc/how_to_guides/using_ompl_constrained_planning/ompl_constrained_planning.html
-    // auto get_relative_pose = [current_pose](double x, double y, double z) {
-    //     auto current_pose = move_group_interface.getCurrentPose();
-    //     auto target_pose = current_pose;
-    //     target_pose.pose.position.x += x;
-    //     target_pose.pose.position.y += y;
-    //     target_pose.pose.position.z += z;
-    //     return target_pose;
-    // };
 
     void publishArmDone(const std::string &done)
     {
@@ -371,10 +364,10 @@ private:
         marker.action = visualization_msgs::msg::Marker::ADD;
 
         marker.pose = target_pose;
-        marker.scale.x = 0.05;  // Size of the marker
+        marker.scale.x = 0.05; 
         marker.scale.y = 0.05;
         marker.scale.z = 0.05;
-        marker.color.a = 1.0;   // Alpha
+        marker.color.a = 1.0;   
         marker.color.r = 1.0;
         marker.color.g = 0.0;
         marker.color.b = 0.0;

@@ -100,9 +100,6 @@ def generate_launch_description():
             robot_description,
             robot_description_semantic,
             {"use_sim_time": True},
-            {"planning_time": 10.0},  
-            {"num_planning_attempts": 10},
-            {"goal_tolerance": 0.01},  
         ],
     )
     arm_brain_node = Node(
