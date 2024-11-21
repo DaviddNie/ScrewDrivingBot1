@@ -103,7 +103,6 @@ private:
     }
 
     void setupCollisionObjects() {
-        // std::string frame_id = move_group_interface_->getPlanningFrame();
         std::string frame_id = "world";
         moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
@@ -150,7 +149,7 @@ private:
     void setupLineConstraint(moveit_msgs::msg::Constraints& constraints, const geometry_msgs::msg::Pose& target_pose) {
         moveit_msgs::msg::PositionConstraint line_constraint;
         line_constraint.header.frame_id = "base_link";  // Reference frame for the constraint
-        line_constraint.link_name = move_group_interface_->getEndEffectorLink(); // "tool0";  // End effector link
+        line_constraint.link_name = move_group_interface_->getEndEffectorLink(); // "tool0"; End effector link for the ur5e
 
         RCLCPP_INFO(this->get_logger(), "Header frame: %s", line_constraint.header.frame_id.c_str());
         RCLCPP_INFO(this->get_logger(), "End effector link: %s", line_constraint.link_name.c_str());
@@ -265,10 +264,6 @@ private:
         if (fraction > 0.9) {  // Check if a sufficient fraction of the path was planned
             RCLCPP_INFO(this->get_logger(), "Cartesian path computed successfully with %.2f%% of the path", fraction * 100.0);
 
-            // Execute the trajectory
-            // double target_duration = 10; //seconds
-            // adjustTrajectoryDuration(trajectory, target_duration);
-
             moveit::planning_interface::MoveGroupInterface::Plan plan;
             plan.trajectory_ = trajectory;
 
@@ -288,22 +283,6 @@ private:
             return false;
         }
     }
-
-   
-    // void adjustTrajectoryDuration(moveit_msgs::msg::RobotTrajectory &trajectory, double target_duration) {
-    //     // Calculate the current duration of the trajectory in seconds
-    //     double current_duration = rclcpp::Duration(trajectory.joint_trajectory.points.back().time_from_start).seconds();
-    //     double scaling_factor = target_duration / current_duration;
-
-    //     // Scale time_from_start for each point in the trajectory
-    //     for (auto &point : trajectory.joint_trajectory.points) {
-    //         // Scale the duration in nanoseconds
-    //         int64_t scaled_nanoseconds = static_cast<int64_t>(rclcpp::Duration(point.time_from_start).nanoseconds() * scaling_factor);
-    //         point.time_from_start.sec = scaled_nanoseconds / 1000000000;
-    //         point.time_from_start.nanosec = scaled_nanoseconds % 1000000000;
-    //     }
-    // }
-
 
     void moveToPose(const geometry_msgs::msg::Pose &target_pose, const std::string &constraintType, double speed = 0.3) {
         move_group_interface_->clearPathConstraints();
@@ -360,17 +339,6 @@ private:
         move_group_interface_->clearPathConstraints();
     }
 
-    // Creates a pose at a given positional offset from the current pose
-    // https://moveit.picknik.ai/humble/doc/how_to_guides/using_ompl_constrained_planning/ompl_constrained_planning.html
-    // auto get_relative_pose = [current_pose](double x, double y, double z) {
-    //     auto current_pose = move_group_interface.getCurrentPose();
-    //     auto target_pose = current_pose;
-    //     target_pose.pose.position.x += x;
-    //     target_pose.pose.position.y += y;
-    //     target_pose.pose.position.z += z;
-    //     return target_pose;
-    // };
-
     void publishArmDone(const std::string &done)
     {
         std_msgs::msg::String done_msg;
@@ -396,10 +364,10 @@ private:
         marker.action = visualization_msgs::msg::Marker::ADD;
 
         marker.pose = target_pose;
-        marker.scale.x = 0.05;  // Size of the marker
+        marker.scale.x = 0.05; 
         marker.scale.y = 0.05;
         marker.scale.z = 0.05;
-        marker.color.a = 1.0;   // Alpha
+        marker.color.a = 1.0;   
         marker.color.r = 1.0;
         marker.color.g = 0.0;
         marker.color.b = 0.0;

@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.task import Future
 from interfaces.srv import BrainCmd
-from collections import deque  # For maintaining the command queue
+from collections import deque 
 
 class BrainEndEffectorTest(Node):
     END_EFFECTOR_MODULE = "endEffector"
@@ -21,9 +21,9 @@ class BrainEndEffectorTest(Node):
         self.command_queue = deque(["TURN_LIGHT_ON", "START_SCREWDRIVING", "TURN_LIGHT_OFF", "GET_STATUS"])
         # self.command_queue = deque(["START_SCREWDRIVING"])
         self.sending_command = False
-        self.processing_complete = False  # Flag to signal when processing is complete
+        self.processing_complete = False 
 
-        # Start processing the queue
+        # Start processing queue
         self.process_command_queue()
 
     def process_command_queue(self):

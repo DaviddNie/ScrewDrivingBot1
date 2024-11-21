@@ -11,7 +11,10 @@ class ArduinoNode(Node):
         self.response_publisher = self.create_publisher(String, 'arduinoResponse', 10)
 
         try:
-            self.serial_port = serial.Serial('/dev/ttyACM0', 9600)  # Adjust the port and baud rate as necessary
+            # Adjust the port and baud rate as necessary
+            usb_port = '/dev/ttyACM0'
+            baud_rate = 9600
+            self.serial_port = serial.Serial(usb_port, baud_rate)  
             self.get_logger().info("Serial connection established with Arduino.")
         except serial.SerialException as e:
             self.get_logger().error(f"Failed to connect to Arduino: {e}")
@@ -21,7 +24,6 @@ class ArduinoNode(Node):
 
     def command_callback(self, msg):
         command = msg.data
-        # self.get_logger().info(f"Received command: {command}")
         self.serial_port.write(command.encode('utf-8'))
         self.serial_port.write(b'\n')
 
