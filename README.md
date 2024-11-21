@@ -17,6 +17,14 @@
   - [Housing block](#housing-block)
   - [Screw block](#screw-block)
 
+### Demo
+Video link: 
+https://www.youtube.com/shorts/ufF1myLWomA
+
+<div align="center">
+  <img src="img/demo_img.png" alt="cad" width="100%">
+</div>
+
 ### Bugs to fix
 - ~~brain_routine_test sometimes send two commands to brain~~  
   - ~~need to add `is_busy` support in brain~~
