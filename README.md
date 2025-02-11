@@ -23,10 +23,11 @@
   - [Housing block](#housing-block)
   - [Screw block](#screw-block)
 
-[nick]:https://www.linkedin.com/in/nickojbell/
-[carmen]:https://www.linkedin.com/in/jiawen-zhang-1aa622203/
-[daryl]:https://www.linkedin.com/in/daryl-lee-7b022a201/
-[david]:https://www.linkedin.com/in/davidnie0418/
+[nick]: https://www.linkedin.com/in/nickojbell/
+[carmen]: https://www.linkedin.com/in/jiawen-zhang-1aa622203/
+[daryl]: https://www.linkedin.com/in/daryl-lee-7b022a201/
+[david]: https://www.linkedin.com/in/davidnie0418/
+
 
 ## What is the project about?
 
@@ -37,12 +38,12 @@ The novelty of this system lies in the integration of a depth camera mounted on 
 **Project Duration**: 6 weeks
 
 **Authors**:
-* Nicholas (James) Bell: [Nick's LinkedIn Profile](nick)
-* Jiawen Zhang: [Jiawen's LinkedIn profile](carmen)
-* David Nie: [David's LinkedIn profile](david)
+* Nicholas (James) Bell: [Nick's LinkedIn Profile][nick]
+* Jiawen Zhang: [Jiawen's LinkedIn profile][carmen]
+* David Nie: [David's LinkedIn profile][david]
 
 **Supervisor**:
-* Daryl Lee: [Daryl's LinkedIn profile](daryl) 
+* Daryl Lee: [Daryl's LinkedIn profile][daryl]
 
 ### We won the 2024 UNSW MTRN4231 Robotics Project Competition!
 
