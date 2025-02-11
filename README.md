@@ -1,6 +1,12 @@
 <!-- omit from toc -->
 # SCREWDRIVING BOT 1
 
+- [What is the project about?](#what-is-the-project-about)
+  - [We won the 2024 UNSW MTRN4231 Robotics Project Competition!](#we-won-the-2024-unsw-mtrn4231-robotics-project-competition)
+- [Demo](#demo)
+  - [Bugs to fix](#bugs-to-fix)
+  - [Recent Updates](#recent-updates)
+  - [Push to main branch: CREATE PULL REQUEST!!!](#push-to-main-branch-create-pull-request)
 - [Workspace Structure](#workspace-structure)
   - [ROS Packages](#ros-packages)
   - [Others](#others)
@@ -17,7 +23,32 @@
   - [Housing block](#housing-block)
   - [Screw block](#screw-block)
 
-### Demo
+[nick]:https://www.linkedin.com/in/nickojbell/
+[carmen]:https://www.linkedin.com/in/jiawen-zhang-1aa622203/
+[daryl]:https://www.linkedin.com/in/daryl-lee-7b022a201/
+[david]:https://www.linkedin.com/in/davidnie0418/
+
+## What is the project about?
+
+The project utilizes UR5e from Universal Robots for automated screw driving.
+
+The novelty of this system lies in the integration of a depth camera mounted on the end effector, enabling the robot to **adapt to different screw-hole locations without manual tuning**.
+
+**Project Duration**: 6 weeks
+
+**Authors**:
+* Nicholas (James) Bell: [Nick's LinkedIn Profile](nick)
+* Jiawen Zhang: [Jiawen's LinkedIn profile](carmen)
+* David Nie: [David's LinkedIn profile](david)
+
+**Supervisor**:
+* Daryl Lee: [Daryl's LinkedIn profile](daryl) 
+
+### We won the 2024 UNSW MTRN4231 Robotics Project Competition!
+
+![we_won](<img/we_won.png>)
+
+## Demo
 Video link: 
 https://www.youtube.com/shorts/ufF1myLWomA
 
